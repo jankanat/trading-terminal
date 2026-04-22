@@ -974,7 +974,15 @@ function renderFeedStatus() {
   const chips = ['coingecko', 'binance', 'alternative'].map((k) => {
     const f = feedMeta[k];
     const statusText = f.status === 'live' ? 'LIVE' : f.status === 'cached' ? 'CACHED' : 'DOWN';
-    const reason = (k === 'coingecko' && cgLastErrorCode) ? ` ${cgLastErrorCode}` : '';
+    let reason = '';
+    if (k === 'coingecko' && cgLastErrorCode) {
+      const norm = String(cgLastErrorCode).toUpperCase();
+      if (norm === '429') reason = ' rate-limit';
+      else if (norm === 'TIMEOUT') reason = ' timeout';
+      else if (norm === 'CG_BACKOFF') reason = ' backoff';
+      else if (norm === 'NETWORK') reason = ' network';
+      else reason = ` ${cgLastErrorCode}`;
+    }
     return `<span class="feed-chip ${f.status}"><span class="feed-dot"></span>${f.label}:${statusText}${reason} ${utcHms(f.lastOkTs)}</span>`;
   }).join('');
   el.innerHTML = chips;
@@ -1267,16 +1275,16 @@ function updateSolMonitor(binanceData, coins) {
   const priceChange = prevPrice ? ((price - prevPrice) / prevPrice) * 100 : 0;
 
   let scenario = 'БЕЗ СДЕЛКИ';
-  let reason = 'RC_NEUTRAL';
+  let reason = 'НЕЙТРАЛЬНЫЙ РЫНОК';
   if (priceChange > 1 && fundingPct > 0 && lsRatio > 1.05) {
     scenario = 'ПРОДОЛЖЕНИЕ ТРЕНДА';
-    reason = 'RC_MOMENTUM_LONG';
+    reason = 'ИМПУЛЬС В ЛОНГ';
   } else if (priceChange < -1 && fundingPct < 0 && lsRatio < 0.95) {
     scenario = 'РИСК ПРОБОЯ ВНИЗ';
-    reason = 'RC_MOMENTUM_SHORT';
+    reason = 'ИМПУЛЬС В ШОРТ';
   } else if (Math.abs(priceChange) < 0.6) {
     scenario = 'ДИАПАЗОН / ОЖИДАНИЕ';
-    reason = 'RC_RANGE';
+    reason = 'РЫНОК В ДИАПАЗОНЕ';
   }
 
   const severity = Math.abs(fundingPct) > 0.02 || Math.abs(priceChange) > 2 ? 'ВЫСОКАЯ' : Math.abs(priceChange) > 1 ? 'СРЕДНЯЯ' : 'НИЗКАЯ';
