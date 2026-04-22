@@ -2,8 +2,7 @@ services:
   - type: web
     name: young-macro-terminal-api
     env: python
-    rootDir: macro-terminal/backend
-    plan: free
+    rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
@@ -15,8 +14,7 @@ services:
   - type: web
     name: young-macro-terminal-ui
     env: static
-    rootDir: macro-terminal/frontend
-    plan: free
+    rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     envVars:
