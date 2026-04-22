@@ -105,7 +105,15 @@
     background: var(--bg2);
     flex-shrink: 0;
     padding: 0 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    max-width: 100vw;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
   }
+  .tabs::-webkit-scrollbar { height: 3px; }
+  .tabs::-webkit-scrollbar-thumb { background: var(--dim); }
   .tab {
     padding: 7px 12px;
     cursor: pointer;
@@ -116,6 +124,7 @@
     transition: all 0.15s;
     user-select: none;
     border-right: 1px solid rgba(255,255,255,0.03);
+    flex-shrink: 0;
   }
   .tab:hover { color: var(--text); background: rgba(255,255,255,0.015); }
   .tab.active {
@@ -341,6 +350,64 @@
   .sol-field { }
   .sol-field-label { color: var(--muted); font-size: var(--fs-xs); letter-spacing: 1px; margin-bottom: 2px; }
   .sol-field-value { font-size: var(--fs-md); font-weight: 600; }
+
+  .table-scroll {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-x;
+  }
+  .table-scroll .tbl {
+    min-width: 640px;
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 1024px) {
+    .header-right { gap: 8px; }
+    .sources { font-size: var(--fs-xxs); }
+    #last-refresh { display: none; }
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(2, 1fr); }
+    .grid-2 { grid-template-columns: 1fr; }
+    .heat-grid { grid-template-columns: repeat(2, 1fr); }
+    .sol-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 640px) {
+    body { font-size: var(--fs-xs); }
+    .header { padding: 6px 8px; }
+    .logo { font-size: var(--fs-sm); letter-spacing: 1px; }
+    .version { display: none; }
+    .header-right { gap: 6px; }
+    .sources { display: none; }
+    .clock { font-size: var(--fs-xs); }
+    .content { padding: 6px; }
+    .section-title { font-size: var(--fs-xs); letter-spacing: 1.2px; margin-bottom: 6px; }
+    .section-sub { display: none; }
+    .grid-4, .grid-3, .grid-2, .heat-grid, .sol-grid { grid-template-columns: 1fr; gap: 6px; }
+    .card { min-height: 58px; padding: 7px 8px; }
+    .card-value { font-size: var(--fs-md); }
+    .ticker-header,
+    .ticker-row {
+      grid-template-columns: 82px 92px 72px;
+      gap: 6px;
+      min-width: 0;
+    }
+    .ticker-header span:nth-child(n+4) { display: none; }
+    .ticker-vol,
+    .ticker-cap,
+    .sparkline { display: none; }
+    .ticker-price { font-size: var(--fs-md); }
+    .ticker-change { font-size: var(--fs-sm); }
+    .ticker-vol, .ticker-cap { font-size: var(--fs-xxs); }
+    .table-scroll { overflow-x: hidden; }
+    .analysis { padding: 8px; font-size: var(--fs-xs); }
+    .fg-wrap { flex-direction: column; align-items: flex-start; gap: 8px; padding: 8px; }
+    .fg-score { font-size: 34px; }
+    .scenario { padding: 8px; }
+    .sol-state { padding: 8px; }
+  }
 </style>
 </head>
 <body>
@@ -394,15 +461,17 @@
     </div>
   </div>
 
-  <div class="ticker-header">
-    <span>АКТИВ</span>
-    <span style="text-align:right">ЦЕНА</span>
-    <span style="text-align:right">24H %</span>
-    <span style="text-align:right">ОБЪЕМ</span>
-    <span style="text-align:right">КАПИТАЛИЗАЦИЯ</span>
-    <span style="text-align:right">МИНИ-ГРАФИК</span>
+  <div class="table-scroll" style="margin-bottom:10px;">
+    <div class="ticker-header">
+      <span>АКТИВ</span>
+      <span style="text-align:right">ЦЕНА</span>
+      <span style="text-align:right">24H %</span>
+      <span style="text-align:right">ОБЪЕМ</span>
+      <span style="text-align:right">КАПИТАЛИЗАЦИЯ</span>
+      <span style="text-align:right">МИНИ-ГРАФИК</span>
+    </div>
+    <div style="background:var(--bg3);border-top:0;margin-bottom:0;" id="ticker-table"></div>
   </div>
-  <div style="background:var(--bg3);border:1px solid var(--border);margin-bottom:10px;" id="ticker-table"></div>
 
   <div class="section-title">КЛЮЧЕВЫЕ РИСКИ И ВОЗМОЖНОСТИ</div>
   <div class="grid-2">
@@ -455,7 +524,7 @@
   </div>
 
   <div class="section-title">FUNDING RATE ПО АКТИВАМ</div>
-  <div style="background:var(--bg3);border:1px solid var(--border);padding:12px;margin-bottom:10px;">
+  <div class="table-scroll" style="padding:12px;margin-bottom:10px;">
     <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">
       <span>АКТИВ</span><span>СТАВКА (8H)</span><span>СИГНАЛ</span><span>ГОДОВОЕ</span>
     </div>
@@ -520,7 +589,7 @@
   <div class="alert green">▲ ЧИСТЫЙ EXCHANGE FLOW ОТРИЦАТЕЛЬНЫЙ — BTC больше выводят с бирж, чем заводят. Исторически это bullish-сигнал накопления.</div>
 
   <div class="section-title">ЗДОРОВЬЕ СЕТИ</div>
-  <div style="background:var(--bg3);border:1px solid var(--border);margin-bottom:10px;">
+  <div class="table-scroll" style="margin-bottom:10px;">
     <table class="tbl">
       <tr><th>МЕТРИКА</th><th>BTC</th><th>ETH</th><th>SOL</th><th>СИГНАЛ</th></tr>
       <tr><td>Активные адреса (24h)</td><td class="bullish">892K</td><td>412K</td><td class="bullish">1.2M</td><td><span class="badge-bull">ЗДОРОВО</span></td></tr>
@@ -641,7 +710,7 @@
   </div>
 
   <div class="section-title">КОРРЕЛЯЦИОННАЯ МАТРИЦА (30D)</div>
-  <div style="background:var(--bg3);border:1px solid var(--border);margin-bottom:10px;">
+  <div class="table-scroll" style="margin-bottom:10px;">
     <table class="tbl">
       <tr><th>АКТИВ</th><th>к BTC</th><th>к SPY</th><th>к GOLD</th><th>к DXY</th><th>ИНТЕРПРЕТАЦИЯ</th></tr>
       <tr><td style="color:var(--bright)">ETH</td><td class="bullish">0.91</td><td class="neutral">0.61</td><td class="neutral">0.42</td><td class="bearish">-0.55</td><td style="color:var(--muted)">Движется почти синхронно с BTC</td></tr>
