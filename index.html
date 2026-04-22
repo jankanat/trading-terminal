@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CRYPTO TERMINAL v1.0</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Oxanium:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #080b10;
+    --bg2: #0b1016;
+    --bg3: #0e141c;
+    --border: #1a232e;
+    --green: #00ff88;
+    --green2: #00cc66;
+    --red: #ff3355;
+    --yellow: #ffcc00;
+    --cyan: #00ccff;
+    --orange: #ff8800;
+    --dim: #253140;
+    --muted: #5a6b7f;
+    --text: #b6c4d4;
+    --bright: #e5edf6;
+    --fs-xxs: 8px;
+    --fs-xs: 9px;
+    --fs-sm: 10px;
+    --fs-md: 12px;
+    --fs-lg: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: var(--fs-sm);
+    font-variant-numeric: tabular-nums;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.015) 0px,
+      rgba(255,255,255,0.015) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    opacity: 0.12;
+    z-index: 1;
+  }
+  .header, .tabs, .content { position: relative; z-index: 2; }
+
+  /* HEADER */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    flex-shrink: 0;
+  }
+  .header-left { display: flex; align-items: center; gap: 8px; }
+  .logo {
+    font-family: 'Oxanium', monospace;
+    font-weight: 700;
+    font-size: var(--fs-md);
+    color: var(--green);
+    letter-spacing: 2px;
+  }
+  .version { color: var(--muted); font-size: var(--fs-xs); }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .sources { color: var(--muted); font-size: var(--fs-xs); letter-spacing: 0.7px; white-space: nowrap; }
+  #last-refresh {
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.015);
+    padding: 2px 6px;
+    border-radius: 2px;
+  }
+  .clock { color: var(--green); font-size: var(--fs-sm); }
+  .live-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green);
+    animation: pulse 1.5s infinite;
+    display: inline-block;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    flex-shrink: 0;
+    padding: 0 8px;
+  }
+  .tab {
+    padding: 7px 12px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: var(--fs-sm);
+    letter-spacing: 0.8px;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    user-select: none;
+    border-right: 1px solid rgba(255,255,255,0.03);
+  }
+  .tab:hover { color: var(--text); background: rgba(255,255,255,0.015); }
+  .tab.active {
+    color: var(--green);
+    border-bottom-color: var(--green);
+    background: linear-gradient(to bottom, rgba(0,255,136,0.04), rgba(0,255,136,0.015));
+  }
+  .tab-num { color: var(--dim); margin-right: 5px; }
+
+  /* CONTENT */
+  .content { flex: 1; overflow-y: auto; padding: 8px; display: none; }
+  .content.active { display: block; }
+  .content::-webkit-scrollbar { width: 4px; }
+  .content::-webkit-scrollbar-track { background: var(--bg); }
+  .content::-webkit-scrollbar-thumb { background: var(--dim); }
+
+  /* SECTION TITLE */
+  .section-title {
+    color: var(--green);
+    font-size: var(--fs-sm);
+    letter-spacing: 1.6px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::before { content: '$'; color: var(--green2); }
+  .section-sub { color: var(--muted); font-size: var(--fs-xs); margin-left: 3px; }
+
+  /* GRID */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 8px; }
+  .grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 10px; }
+
+  /* CARD */
+  .card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    min-height: 66px;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .card:hover { border-color: #273444; background: #101823; }
+  .card-label { color: var(--muted); font-size: var(--fs-xxs); letter-spacing: 1px; margin-bottom: 3px; text-transform: uppercase; }
+  .card-value { font-size: var(--fs-lg); font-weight: 600; margin-bottom: 1px; line-height: 1.1; }
+  .card-sub { font-size: var(--fs-xs); color: var(--muted); }
+  .card-badge {
+    display: inline-block;
+    font-size: var(--fs-xs);
+    padding: 1px 6px;
+    letter-spacing: 1px;
+    float: right;
+    margin-top: 2px;
+  }
+  .bullish { color: var(--green); }
+  .bearish { color: var(--red); }
+  .neutral { color: var(--yellow); }
+  .badge-bull { background: rgba(0,255,136,0.1); color: var(--green); border: 1px solid rgba(0,255,136,0.3); }
+  .badge-bear { background: rgba(255,51,85,0.1); color: var(--red); border: 1px solid rgba(255,51,85,0.3); }
+  .badge-neu { background: rgba(255,204,0,0.1); color: var(--yellow); border: 1px solid rgba(255,204,0,0.3); }
+
+  /* PRICE TICKER */
+  .ticker-row {
+    display: grid;
+    grid-template-columns: 90px 120px 90px 120px 130px 260px;
+    gap: 8px;
+    align-items: center;
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+    transition: background 0.12s;
+  }
+  .ticker-row:last-child { border-bottom: none; }
+  .ticker-row:hover { background: rgba(255,255,255,0.02); }
+  .ticker-sym { color: var(--bright); font-weight: 600; font-size: var(--fs-md); }
+  .ticker-price { font-size: var(--fs-lg); font-weight: 600; text-align: right; }
+  .ticker-change { text-align: right; font-size: var(--fs-md); }
+  .ticker-vol { color: var(--muted); text-align: right; font-size: var(--fs-xs); }
+  .ticker-cap { color: var(--muted); text-align: right; font-size: var(--fs-xs); }
+  .ticker-header {
+    display: grid;
+    grid-template-columns: 90px 120px 90px 120px 130px 260px;
+    gap: 8px;
+    align-items: center;
+    padding: 5px 10px;
+    border-bottom: 1px solid var(--dim);
+    color: var(--muted);
+    font-size: var(--fs-xxs);
+    letter-spacing: 1px;
+    background: var(--bg2);
+  }
+
+  /* MINI CHART (CSS bars) */
+  .sparkline {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    height: 24px;
+    width: 100%;
+  }
+  .sparkline svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .spark-grid { stroke: rgba(255,255,255,0.04); stroke-width: 1; }
+  .spark-baseline { stroke: rgba(255,255,255,0.12); stroke-width: 1; }
+  .spark-line-up {
+    fill: none;
+    stroke: var(--green);
+    stroke-width: 1.1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .spark-line-down {
+    fill: none;
+    stroke: var(--red);
+    stroke-width: 1.1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .spark-fill-up { fill: rgba(0,255,136,0.035); }
+  .spark-fill-down { fill: rgba(255,51,85,0.035); }
+
+  /* ALERT BOX */
+  .alert {
+    border-left: 3px solid var(--yellow);
+    background: rgba(255,204,0,0.05);
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    font-size: var(--fs-xs);
+    color: var(--yellow);
+    line-height: 1.6;
+  }
+  .alert.red { border-color: var(--red); background: rgba(255,51,85,0.05); color: var(--red); }
+  .alert.green { border-color: var(--green); background: rgba(0,255,136,0.05); color: var(--green); }
+
+  /* TABLE */
+  .tbl { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+  .tbl th {
+    text-align: left;
+    padding: 6px 10px;
+    font-size: var(--fs-xs);
+    letter-spacing: 1px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--dim);
+    background: var(--bg2);
+  }
+  .tbl td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: var(--fs-sm);
+  }
+  .tbl tr:hover td { background: rgba(255,255,255,0.018); }
+
+  /* HEAT MAP */
+  .heat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
+  .heat-cell {
+    padding: 10px;
+    text-align: center;
+  }
+  .heat-label { font-size: var(--fs-xs); color: var(--muted); letter-spacing: 1px; margin-bottom: 4px; }
+  .heat-value { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .heat-sub { font-size: var(--fs-xs); color: var(--muted); }
+  .heat-high { background: rgba(255,51,85,0.12); border: 1px solid rgba(255,51,85,0.25); }
+  .heat-elevated { background: rgba(255,136,0,0.12); border: 1px solid rgba(255,136,0,0.25); }
+  .heat-moderate { background: rgba(255,204,0,0.08); border: 1px solid rgba(255,204,0,0.2); }
+  .heat-low { background: rgba(0,255,136,0.08); border: 1px solid rgba(0,255,136,0.2); }
+
+  /* FUNDING RATE TABLE */
+  .funding-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .funding-sym { width: 60px; color: var(--bright); font-weight: 600; }
+  .funding-bar-wrap { flex: 1; height: 6px; background: var(--border); position: relative; }
+  .funding-bar { height: 100%; position: absolute; top: 0; }
+  .funding-pos { background: var(--green); left: 50%; }
+  .funding-neg { background: var(--red); right: 50%; }
+  .funding-val { width: 80px; text-align: right; font-size: var(--fs-sm); }
+  .funding-label { width: 80px; text-align: right; font-size: var(--fs-xs); color: var(--muted); }
+
+  /* OI TABLE */
+  .oi-bar { height: 8px; background: var(--cyan); opacity: 0.7; border-radius: 1px; }
+
+  /* ANALYSIS TEXT */
+  .analysis {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 12px;
+    margin-bottom: 10px;
+    line-height: 1.65;
+    font-size: var(--fs-sm);
+  }
+  .analysis p { margin-bottom: 6px; color: var(--text); }
+  .analysis p::before { content: '> '; color: var(--green2); }
+
+  /* FEAR GREED */
+  .fg-wrap { display: flex; align-items: center; gap: 16px; padding: 12px; background: var(--bg3); border: 1px solid var(--border); margin-bottom: 10px; }
+  .fg-score { font-size: 42px; font-weight: 700; color: var(--yellow); line-height: 1; }
+  .fg-label { font-size: var(--fs-sm); color: var(--yellow); margin-top: 4px; letter-spacing: 1px; }
+  .fg-bar-wrap { flex: 1; }
+  .fg-bar { height: 8px; background: linear-gradient(to right, var(--red), var(--yellow), var(--green)); border-radius: 4px; position: relative; margin-bottom: 6px; }
+  .fg-needle { position: absolute; top: -3px; width: 2px; height: 14px; background: white; transform: translateX(-50%); }
+  .fg-labels { display: flex; justify-content: space-between; font-size: var(--fs-xs); color: var(--muted); }
+
+  /* SCENARIOS */
+  .scenario {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--muted);
+    padding: 9px 10px;
+    margin-bottom: 6px;
+  }
+  .scenario.active-sc { border-left-color: var(--green); }
+  .scenario-title { font-size: var(--fs-sm); font-weight: 600; margin-bottom: 4px; color: var(--bright); }
+  .scenario-body { font-size: var(--fs-xs); color: var(--muted); line-height: 1.6; }
+
+  /* SOL STATE */
+  .sol-state { background: var(--bg3); border: 1px solid rgba(0,255,136,0.35); padding: 10px; margin-bottom: 8px; }
+  .sol-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .sol-title { color: var(--green); font-size: var(--fs-md); letter-spacing: 2px; font-weight: 600; }
+  .sol-updated { color: var(--muted); font-size: var(--fs-xs); }
+  .sol-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .sol-field { }
+  .sol-field-label { color: var(--muted); font-size: var(--fs-xs); letter-spacing: 1px; margin-bottom: 2px; }
+  .sol-field-value { font-size: var(--fs-md); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo">◈ КРИПТО ТЕРМИНАЛ</div>
+    <div class="version">v1.0.0</div>
+  </div>
+  <div class="header-right">
+    <div class="sources">BINANCE / COINGECKO / ALTERNATIVE.ME</div>
+    <div class="sources" id="last-refresh">ПОСЛЕДНЕЕ ОБНОВЛЕНИЕ: --:--:-- UTC</div>
+    <div class="clock" id="clock">--:--:--</div>
+    <span class="live-dot"></span>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab(0)"><span class="tab-num">1</span>0Б30Р</div>
+  <div class="tab" onclick="switchTab(1)"><span class="tab-num">2</span>ДЕРИВАТИВЫ</div>
+  <div class="tab" onclick="switchTab(2)"><span class="tab-num">3</span>ОНЧЕЙН</div>
+  <div class="tab" onclick="switchTab(3)"><span class="tab-num">4</span>НАСТРОЕНИЯ</div>
+  <div class="tab" onclick="switchTab(4)"><span class="tab-num">5</span>MAKPO LINK</div>
+  <div class="tab" onclick="switchTab(5)"><span class="tab-num">6</span>SOL МОНИТОР</div>
+</div>
+
+<!-- TAB 1: OVERVIEW -->
+<div class="content active" id="tab-0">
+  <div class="section-title">СРЕЗ РЫНКА<span class="section-sub">— Топ-активы, доминация, капитализация</span></div>
+
+  <div class="grid-4" style="margin-bottom:10px;">
+    <div class="card">
+      <div class="card-label">ОБЩАЯ КАПИТАЛИЗАЦИЯ</div>
+      <div class="card-value bullish" id="overview-total-cap">$2.71T</div>
+      <div class="card-sub" id="overview-total-cap-change">▲ +3.2% (24h)</div>
+    </div>
+    <div class="card">
+      <div class="card-label">ДОМИНАЦИЯ BTC</div>
+      <div class="card-value neutral" id="overview-btc-dom">62.4%</div>
+      <div class="card-sub" id="overview-btc-dom-change">▲ +0.8% from 61.6%</div>
+    </div>
+    <div class="card">
+      <div class="card-label">ОБЪЕМ 24H</div>
+      <div class="card-value" id="overview-total-volume">$187B</div>
+      <div class="card-sub" id="overview-total-volume-sub">спотовый объем за 24h</div>
+    </div>
+    <div class="card">
+      <div class="card-label">СЕЗОН АЛЬТКОИНОВ</div>
+      <div class="card-value bearish">23 / 100</div>
+      <div class="card-sub">Сезон Bitcoin</div>
+    </div>
+  </div>
+
+  <div class="ticker-header">
+    <span>АКТИВ</span>
+    <span style="text-align:right">ЦЕНА</span>
+    <span style="text-align:right">24H %</span>
+    <span style="text-align:right">ОБЪЕМ</span>
+    <span style="text-align:right">КАПИТАЛИЗАЦИЯ</span>
+    <span style="text-align:right">МИНИ-ГРАФИК</span>
+  </div>
+  <div style="background:var(--bg3);border:1px solid var(--border);margin-bottom:10px;" id="ticker-table"></div>
+
+  <div class="section-title">КЛЮЧЕВЫЕ РИСКИ И ВОЗМОЖНОСТИ</div>
+  <div class="grid-2">
+    <div style="background:var(--bg3);border:1px solid var(--border);padding:12px;">
+      <div style="color:var(--red);font-size:10px;letter-spacing:1px;margin-bottom:8px;">▲ КЛЮЧЕВЫЕ РИСКИ</div>
+      <div style="font-size:10px;line-height:2;color:var(--text);">
+        › Действия SEC — регуляторная неопределенность<br/>
+        › Рост доминации BTC → давление на альткоины<br/>
+        › Макро-встречный ветер — усиление DXY<br/>
+        › Притоки на биржи растут — давление продавцов
+      </div>
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);padding:12px;">
+      <div style="color:var(--green);font-size:10px;letter-spacing:1px;margin-bottom:8px;">▲ КЛЮЧЕВЫЕ ВОЗМОЖНОСТИ</div>
+      <div style="font-size:10px;line-height:2;color:var(--text);">
+        › Притоки в ETF ускоряются — институциональный спрос<br/>
+        › Рост экосистемы SOL — TVL в DeFi увеличивается<br/>
+        › Импульс халвинг-цикла — исторически bullish<br/>
+        › Предложение стейблкоинов на ATH — готовый dry powder
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 2: DERIVATIVES -->
+<div class="content" id="tab-1">
+  <div class="section-title">ДЕРИВАТИВЫ<span class="section-sub">— Funding rate, OI, liquidations, long/short</span></div>
+
+  <div class="grid-4" style="margin-bottom:10px;">
+    <div class="card">
+      <div class="card-label">BTC FUNDING RATE</div>
+      <div class="card-value bullish" id="deriv-btc-funding">+0.0089%</div>
+      <div class="card-sub" id="deriv-btc-funding-sub">Преобладают longs — NEUTRAL</div>
+    </div>
+    <div class="card">
+      <div class="card-label">SOL FUNDING RATE</div>
+      <div class="card-value bullish" id="deriv-sol-funding">+0.0124%</div>
+      <div class="card-sub" id="deriv-sol-funding-sub">Преобладают longs — BULLISH LEAN</div>
+    </div>
+    <div class="card">
+      <div class="card-label">TOTAL OI (PERPS)</div>
+      <div class="card-value" id="deriv-total-oi">$28.4B</div>
+      <div class="card-sub" id="deriv-total-oi-sub">Актуальный OI Binance futures</div>
+    </div>
+    <div class="card">
+      <div class="card-label">24H LIQUIDATIONS</div>
+      <div class="card-value bearish">$312M</div>
+      <div class="card-sub">Шорты: $210M / Лонги: $102M</div>
+    </div>
+  </div>
+
+  <div class="section-title">FUNDING RATE ПО АКТИВАМ</div>
+  <div style="background:var(--bg3);border:1px solid var(--border);padding:12px;margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">
+      <span>АКТИВ</span><span>СТАВКА (8H)</span><span>СИГНАЛ</span><span>ГОДОВОЕ</span>
+    </div>
+    <div id="funding-table"></div>
+  </div>
+
+  <div class="section-title">OPEN INTEREST (OI)</div>
+  <div style="background:var(--bg3);border:1px solid var(--border);padding:12px;margin-bottom:10px;">
+    <table class="tbl">
+      <tr><th>АКТИВ</th><th>OI ($)</th><th>ИЗМЕНЕНИЕ OI 24H</th><th>ИЗМЕНЕНИЕ ЦЕНЫ</th><th>СИГНАЛ</th><th>OI БАР</th></tr>
+      <tbody id="oi-table"></tbody>
+    </table>
+  </div>
+
+  <div class="section-title">LONG / SHORT RATIO</div>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-label">BTC L/S RATIO</div>
+      <div class="card-value neutral">1.18</div>
+      <div class="card-sub">Лонги 54.1% / Шорты 45.9%</div>
+    </div>
+    <div class="card">
+      <div class="card-label">ETH L/S RATIO</div>
+      <div class="card-value neutral">1.05</div>
+      <div class="card-sub">Лонги 51.2% / Шорты 48.8%</div>
+    </div>
+    <div class="card">
+      <div class="card-label">SOL L/S RATIO</div>
+      <div class="card-value bullish">1.42</div>
+      <div class="card-sub">Лонги 58.6% / Шорты 41.4%</div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: ON-CHAIN -->
+<div class="content" id="tab-2">
+  <div class="section-title">ОНЧЕЙН<span class="section-sub">— Exchange flows, whale activity, network health</span></div>
+
+  <div class="grid-4">
+    <div class="card">
+      <div class="card-label">BTC ПРИТОК НА БИРЖИ</div>
+      <div class="card-value bearish">24,800 BTC</div>
+      <div class="card-sub">▲ +18% к 7d avg — СИГНАЛ ПРОДАЖИ</div>
+    </div>
+    <div class="card">
+      <div class="card-label">BTC ОТТОК С БИРЖ</div>
+      <div class="card-value bullish">31,200 BTC</div>
+      <div class="card-sub">Outflow > Inflow — ACCUMULATION</div>
+    </div>
+    <div class="card">
+      <div class="card-label">WHALE TRANSACTIONS</div>
+      <div class="card-value bullish">1,840</div>
+      <div class="card-sub">▲ +22% (>$100K txns/24h)</div>
+    </div>
+    <div class="card">
+      <div class="card-label">STABLECOIN SUPPLY</div>
+      <div class="card-value bullish">$188B</div>
+      <div class="card-sub">ATH — Dry powder ready</div>
+    </div>
+  </div>
+
+  <div class="alert green">▲ ЧИСТЫЙ EXCHANGE FLOW ОТРИЦАТЕЛЬНЫЙ — BTC больше выводят с бирж, чем заводят. Исторически это bullish-сигнал накопления.</div>
+
+  <div class="section-title">ЗДОРОВЬЕ СЕТИ</div>
+  <div style="background:var(--bg3);border:1px solid var(--border);margin-bottom:10px;">
+    <table class="tbl">
+      <tr><th>МЕТРИКА</th><th>BTC</th><th>ETH</th><th>SOL</th><th>СИГНАЛ</th></tr>
+      <tr><td>Активные адреса (24h)</td><td class="bullish">892K</td><td>412K</td><td class="bullish">1.2M</td><td><span class="badge-bull">ЗДОРОВО</span></td></tr>
+      <tr><td>Транзакции (24h)</td><td>648K</td><td>1.1M</td><td class="bullish">48M</td><td><span class="badge-bull">АКТИВНО</span></td></tr>
+      <tr><td>Hash Rate / TPS</td><td class="bullish">780 EH/s</td><td>—</td><td class="bullish">65,000 TPS</td><td><span class="badge-bull">ATH</span></td></tr>
+      <tr><td>Средняя комиссия</td><td class="neutral">$8.20</td><td class="neutral">$2.40</td><td class="bullish">$0.001</td><td><span class="badge-neu">УМЕРЕННО</span></td></tr>
+      <tr><td>NVT соотношение</td><td class="neutral">65</td><td class="neutral">42</td><td class="bullish">28</td><td><span class="badge-bull">НЕДООЦЕНКА</span></td></tr>
+    </table>
+  </div>
+
+  <div class="section-title">АКТИВНОСТЬ КИТОВ (ПОСЛЕДНИЕ 24H)</div>
+  <div style="background:var(--bg3);border:1px solid var(--border);padding:12px;margin-bottom:10px;">
+    <div style="font-size:10px;line-height:2.2;color:var(--text);">
+      <span style="color:var(--muted)">04:18 UTC</span> &nbsp; <span class="bullish">▲</span> &nbsp; Неизвестный кошелек перевел <span class="bullish">12,480 BTC</span> в cold storage — Coinbase custody<br/>
+      <span style="color:var(--muted)">07:42 UTC</span> &nbsp; <span class="bearish">▼</span> &nbsp; <span class="bearish">8,200 ETH</span> переведены на Binance с whale-кошелька (возможная продажа)<br/>
+      <span style="color:var(--muted)">09:15 UTC</span> &nbsp; <span class="bullish">▲</span> &nbsp; MicroStrategy сообщила о дополнительной покупке <span class="bullish">2,000 BTC</span><br/>
+      <span style="color:var(--muted)">11:30 UTC</span> &nbsp; <span class="bullish">▲</span> &nbsp; <span class="bullish">420,000 SOL</span> выведены с Binance — сигнал накопления<br/>
+      <span style="color:var(--muted)">13:05 UTC</span> &nbsp; <span class="neutral">◆</span> &nbsp; Tether выпустил <span class="neutral">$500M USDT</span> в сети Tron — вливание ликвидности
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: SENTIMENT -->
+<div class="content" id="tab-3">
+  <div class="section-title">НАСТРОЕНИЯ<span class="section-sub">— Fear & Greed, social, Google Trends</span></div>
+
+  <div class="fg-wrap">
+    <div>
+      <div class="fg-score" id="fg-score">52</div>
+      <div class="fg-label" id="fg-label">NEUTRAL</div>
+    </div>
+    <div class="fg-bar-wrap">
+      <div style="font-size:9px;color:var(--muted);letter-spacing:1px;margin-bottom:6px;">CRYPTO FEAR & GREED INDEX</div>
+      <div class="fg-bar">
+        <div class="fg-needle" id="fg-needle" style="left:52%"></div>
+      </div>
+      <div class="fg-labels">
+        <span>EXTREME FEAR</span><span>FEAR</span><span>NEUTRAL</span><span>GREED</span><span>EXTREME GREED</span>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--muted);" id="fg-history">
+        Вчера: <span class="neutral">48</span> &nbsp;|&nbsp; Прошлая неделя: <span class="bearish">38</span> &nbsp;|&nbsp; Прошлый месяц: <span class="bearish">31</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-label">НАСТРОЕНИЯ В TWITTER/X</div>
+      <div class="card-value neutral">62% БЫЧИЙ НАСТРОЙ</div>
+      <div class="card-sub">▲ +8% к вчерашнему дню</div>
+    </div>
+    <div class="card">
+      <div class="card-label">АКТИВНОСТЬ НА REDDIT</div>
+      <div class="card-value bullish">+34% ПУБЛИКАЦИЙ</div>
+      <div class="card-sub">r/crypto и r/solana заметно растут</div>
+    </div>
+    <div class="card">
+      <div class="card-label">ТРЕНДЫ GOOGLE</div>
+      <div class="card-value neutral">48 / 100</div>
+      <div class="card-sub">Запрос "buy bitcoin" растет</div>
+    </div>
+  </div>
+
+  <div class="section-title">СЕКТОРНАЯ КАРТА НАСТРОЕНИЙ</div>
+  <div class="heat-grid">
+    <div class="heat-cell heat-low">
+      <div class="heat-label">LAYER 1</div>
+      <div class="heat-value bullish">БЫЧИЙ</div>
+      <div class="heat-sub">BTC, SOL, ETH в лидерах</div>
+    </div>
+    <div class="heat-cell heat-elevated">
+      <div class="heat-label">DeFi</div>
+      <div class="heat-value neutral">НЕЙТРАЛЬНО</div>
+      <div class="heat-sub">TVL восстанавливается</div>
+    </div>
+    <div class="heat-cell heat-high">
+      <div class="heat-label">MEME COINS</div>
+      <div class="heat-value bearish">ВЫСОКИЙ РИСК</div>
+      <div class="heat-sub">Спекулятивный перегрев</div>
+    </div>
+    <div class="heat-cell heat-moderate">
+      <div class="heat-label">LAYER 2</div>
+      <div class="heat-value neutral">УМЕРЕННО</div>
+      <div class="heat-sub">Arbitrum и OP во флэте</div>
+    </div>
+    <div class="heat-cell heat-low">
+      <div class="heat-label">ЭКОСИСТЕМА BTC</div>
+      <div class="heat-value bullish">БЫЧИЙ</div>
+      <div class="heat-sub">Ordinals и Runes активны</div>
+    </div>
+    <div class="heat-cell heat-elevated">
+      <div class="heat-label">AI ТОКЕНЫ</div>
+      <div class="heat-value neutral">ПОВЫШЕНО</div>
+      <div class="heat-sub">Нарратив остывает</div>
+    </div>
+    <div class="heat-cell heat-moderate">
+      <div class="heat-label">RWA</div>
+      <div class="heat-value neutral">РОСТ</div>
+      <div class="heat-sub">Тренд на токенизацию</div>
+    </div>
+    <div class="heat-cell heat-high">
+      <div class="heat-label">ЛЕВЕРИДЖ</div>
+      <div class="heat-value bearish">ВЫСОКО</div>
+      <div class="heat-sub">Риск ликвидаций растет</div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: MACRO LINK -->
+<div class="content" id="tab-4">
+  <div class="section-title">МАКРО LINK<span class="section-sub">— Crypto vs DXY, Gold, SPY, rates</span></div>
+
+  <div class="analysis">
+    <p>DXY на 104.2 — сильный доллар создает встречный ветер для crypto. Историческая корреляция: DXY ▲ → BTC ▼. Важный уровень сопротивления: 105.</p>
+    <p>Ставка ФРС 3.50-3.75% — уровень высокий, но стабильный. Ожидания снижения ставки смещены к сентябрю 2025. Risk assets обычно выигрывают от цикла снижения.</p>
+    <p>Gold на $3,280 (ATH) — индикатор монетарного стресса. Исторически BTC часто следует за Gold с лагом 2-4 недели.</p>
+    <p>Корреляция SPY и BTC: 0.64 (30d). Crypto все еще движется вместе с risk assets. Macro risk-off = давление на crypto.</p>
+  </div>
+
+  <div class="section-title">КОРРЕЛЯЦИОННАЯ МАТРИЦА (30D)</div>
+  <div style="background:var(--bg3);border:1px solid var(--border);margin-bottom:10px;">
+    <table class="tbl">
+      <tr><th>АКТИВ</th><th>к BTC</th><th>к SPY</th><th>к GOLD</th><th>к DXY</th><th>ИНТЕРПРЕТАЦИЯ</th></tr>
+      <tr><td style="color:var(--bright)">ETH</td><td class="bullish">0.91</td><td class="neutral">0.61</td><td class="neutral">0.42</td><td class="bearish">-0.55</td><td style="color:var(--muted)">Движется почти синхронно с BTC</td></tr>
+      <tr><td style="color:var(--bright)">SOL</td><td class="bullish">0.84</td><td class="neutral">0.58</td><td class="neutral">0.38</td><td class="bearish">-0.49</td><td style="color:var(--muted)">Высокая бета к BTC</td></tr>
+      <tr><td style="color:var(--bright)">BTC</td><td>—</td><td class="neutral">0.64</td><td class="bullish">0.71</td><td class="bearish">-0.62</td><td style="color:var(--muted)">Risk asset + цифровое золото</td></tr>
+      <tr><td style="color:var(--bright)">GOLD</td><td class="neutral">0.71</td><td class="neutral">0.28</td><td>—</td><td class="bearish">-0.81</td><td style="color:var(--muted)">Монетарный защитный актив</td></tr>
+    </table>
+  </div>
+
+  <div class="grid-4">
+    <div class="card">
+      <div class="card-label">DXY INDEX</div>
+      <div class="card-value bearish">104.2</div>
+      <div class="card-sub">▲ +0.4% — давление на crypto</div>
+    </div>
+    <div class="card">
+      <div class="card-label">GOLD (XAU)</div>
+      <div class="card-value bullish">$3,280</div>
+      <div class="card-sub">ATH — сигнал монетарного стресса</div>
+    </div>
+    <div class="card">
+      <div class="card-label">SPY (S&P 500)</div>
+      <div class="card-value neutral">$528</div>
+      <div class="card-sub">▼ -0.8% — осторожный risk-off</div>
+    </div>
+    <div class="card">
+      <div class="card-label">10Y TREASURY (UST)</div>
+      <div class="card-value bearish">4.42%</div>
+      <div class="card-sub">▲ +8bps — растет risk premium</div>
+    </div>
+  </div>
+
+  <div class="alert">◆ МАКРО ВАЧ: DXY подходит к сопротивлению 105. При пробое вверх вероятно усиление давления на crypto. Выступление ФРС в четверг — сигналы по rate cut могут запустить ралли.</div>
+</div>
+
+<!-- TAB 6: SOL MONITOR -->
+<div class="content" id="tab-5">
+  <div class="section-title">SOL МОНИТОР<span class="section-sub">— Binance live pulse, funding, OI, L/S</span></div>
+
+  <div class="sol-state">
+    <div class="sol-header">
+      <div class="sol-title">◎ SOL / USDT PERPETUAL — ТЕКУЩИЙ СТАТУС</div>
+      <div class="sol-updated">ОБНОВЛЕНО: <span id="sol-time">--:--</span> &nbsp; <span class="live-dot"></span></div>
+    </div>
+    <div class="sol-grid">
+      <div class="sol-field">
+        <div class="sol-field-label">ЦЕНА</div>
+        <div class="sol-field-value bullish" id="sol-price">$136.40</div>
+      </div>
+      <div class="sol-field">
+        <div class="sol-field-label">СЦЕНАРИЙ</div>
+        <div class="sol-field-value neutral" id="sol-scenario">БЕЗ СДЕЛКИ</div>
+      </div>
+      <div class="sol-field">
+        <div class="sol-field-label">СИЛА ИЗМЕНЕНИЯ</div>
+        <div class="sol-field-value neutral" id="sol-severity">MINOR</div>
+      </div>
+      <div class="sol-field">
+        <div class="sol-field-label">КОНТЕКСТ / CONTEXT</div>
+        <div class="sol-field-value" id="sol-context">Buyer holds 4h control</div>
+      </div>
+      <div class="sol-field">
+        <div class="sol-field-label">КОНТРОЛЬ / CONTROL</div>
+        <div class="sol-field-value bullish" id="sol-control">ПОКУПАТЕЛЬ</div>
+      </div>
+      <div class="sol-field">
+        <div class="sol-field-label">ЗДОРОВЬЕ ДАННЫХ</div>
+        <div class="sol-field-value bullish" id="sol-health">OK</div>
+      </div>
+      <div class="sol-field">
+        <div class="sol-field-label">ВЕРХНИЙ УРОВЕНЬ</div>
+        <div class="sol-field-value" id="sol-upper">$140.20</div>
+      </div>
+      <div class="sol-field">
+        <div class="sol-field-label">НИЖНИЙ УРОВЕНЬ</div>
+        <div class="sol-field-value" id="sol-lower">$131.80</div>
+      </div>
+      <div class="sol-field">
+        <div class="sol-field-label">КОД ПРИЧИНЫ</div>
+        <div class="sol-field-value neutral" id="sol-reason">RC_CONTINUATION</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">ПОСЛЕДНИЙ МОНИТОРИНГ-ПУЛЬС</div>
+  <div style="background:var(--bg3);border:1px solid var(--border);padding:12px;margin-bottom:10px;font-size:11px;line-height:2.2;color:var(--text);" id="sol-pulse">
+    <span style="color:var(--green)">1)</span> SOL: без существенных изменений.<br/>
+    <span style="color:var(--green)">2)</span> Сценарий: <span class="neutral">no trade</span>.<br/>
+    <span style="color:var(--green)">3)</span> Смысл: покупатель удерживает контроль, пробой 140.20 пока не подтверждён.<br/>
+    <span style="color:var(--green)">4)</span> Смотреть: <span class="bullish">закрепление выше 140.20</span> или возврат ниже <span class="bearish">131.80</span>.
+  </div>
+
+  <div class="section-title">СЦЕНАРИИ</div>
+  <div class="scenario active-sc">
+    <div class="scenario-title">◆ СЦЕНАРИЙ 1 — ПРОДОЛЖЕНИЕ (АКТИВЕН)</div>
+    <div class="scenario-body">Покупатель удерживает контроль на 4h. Цена консолидируется выше 131.80. Ждем подтверждение на 1h выше 140.20 для long-входа. Цель: зона 148-152.</div>
+  </div>
+  <div class="scenario">
+    <div class="scenario-title">◇ СЦЕНАРИЙ 2 — АБСОРБЦИЯ</div>
+    <div class="scenario-body">Цена агрессивно тестирует поддержку 131.80. Если уровень удерживается и есть абсорбция покупателя на 15m — возможен вход в разворот. Риск: invalidation ниже 127.50.</div>
+  </div>
+  <div class="scenario">
+    <div class="scenario-title">⚠ СЦЕНАРИЙ 3 — ЗОНА РИСКА</div>
+    <div class="scenario-body">Пробой 131.80 вниз на объеме. Контроль переходит к продавцу. Без сделки — ждем новую структуру. Потенциальная цель: зона 118-120.</div>
+  </div>
+
+  <div class="section-title">SOL ДЕРИВАТИВЫ</div>
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-label">FUNDING RATE (SOL)</div>
+      <div class="card-value bullish" id="sol-deriv-funding">+0.0124%</div>
+      <div class="card-sub">Доминируют лонги — бычий уклон</div>
+    </div>
+    <div class="card">
+      <div class="card-label">OPEN INTEREST (SOL)</div>
+      <div class="card-value bullish" id="sol-deriv-oi">$2.8B</div>
+      <div class="card-sub">▲ +18.6% OI вместе с ценой — бычий сигнал</div>
+    </div>
+    <div class="card">
+      <div class="card-label">L/S RATIO (SOL)</div>
+      <div class="card-value bullish" id="sol-ls-ratio">1.42</div>
+      <div class="card-sub" id="sol-ls-ratio-sub">58.6% лонги — контроль покупателя</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(n) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n));
+  document.querySelectorAll('.content').forEach((c,i) => c.classList.toggle('active', i===n));
+}
+
+function updateClock() {
+  const now = new Date();
+  const t = now.toUTCString().slice(17,25);
+  document.getElementById('clock').textContent = t + ' UTC';
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// Keyboard nav
+document.addEventListener('keydown', e => {
+  const n = parseInt(e.key);
+  if (n >= 1 && n <= 6) switchTab(n - 1);
+});
+
+const ASSETS = [
+  { id: 'bitcoin', symbol: 'BTC', icon: '₿' },
+  { id: 'ethereum', symbol: 'ETH', icon: 'Ξ' },
+  { id: 'solana', symbol: 'SOL', icon: '◎' },
+  { id: 'binancecoin', symbol: 'BNB', icon: '◆' },
+  { id: 'ripple', symbol: 'XRP', icon: '✦' }
+];
+
+const FUTURES_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'DOGEUSDT'];
+let lastPriceSnapshot = {};
+let cachedCoins = [];
+
+function getFallbackCoins() {
+  return [
+    { id: 'bitcoin', symbol: 'BTC', icon: '₿', current_price: 78000, price_change_percentage_24h: 0.8, total_volume: 44000000000, market_cap: 1550000000000, sparkline_in_7d: { price: [77000, 77200, 77500, 77800, 77600, 77900, 78000] } },
+    { id: 'ethereum', symbol: 'ETH', icon: 'Ξ', current_price: 2400, price_change_percentage_24h: 0.6, total_volume: 18000000000, market_cap: 289000000000, sparkline_in_7d: { price: [2350, 2360, 2380, 2390, 2385, 2395, 2400] } },
+    { id: 'solana', symbol: 'SOL', icon: '◎', current_price: 88, price_change_percentage_24h: 1.2, total_volume: 4500000000, market_cap: 59000000000, sparkline_in_7d: { price: [84, 85, 86, 87, 86.5, 87.5, 88] } },
+    { id: 'binancecoin', symbol: 'BNB', icon: '◆', current_price: 643, price_change_percentage_24h: 0.4, total_volume: 1200000000, market_cap: 94000000000, sparkline_in_7d: { price: [635, 637, 639, 641, 640, 642, 643] } },
+    { id: 'ripple', symbol: 'XRP', icon: '✦', current_price: 1.45, price_change_percentage_24h: -0.2, total_volume: 3200000000, market_cap: 85000000000, sparkline_in_7d: { price: [1.48, 1.47, 1.46, 1.45, 1.45, 1.44, 1.45] } }
+  ];
+}
+
+function fmtMoney(value) {
+  if (value === null || value === undefined || Number.isNaN(value)) return 'N/A';
+  if (Math.abs(value) >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
+  if (Math.abs(value) >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
+  if (Math.abs(value) >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
+  if (Math.abs(value) >= 1e3) return `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  return `$${value.toFixed(2)}`;
+}
+
+function fmtPct(value, digits = 2) {
+  if (value === null || value === undefined || Number.isNaN(value)) return 'N/A';
+  const sign = value > 0 ? '▲ +' : value < 0 ? '▼ ' : '';
+  return `${sign}${value.toFixed(digits)}%`;
+}
+
+function clsByValue(value) {
+  if (value > 0) return 'bullish';
+  if (value < 0) return 'bearish';
+  return 'neutral';
+}
+
+function buildMiniSeries(coin, points = 20) {
+  const src = coin.sparkline_in_7d && Array.isArray(coin.sparkline_in_7d.price)
+    ? coin.sparkline_in_7d.price
+    : [];
+  if (!src.length) {
+    const fallback = coin.current_price || 0;
+    return Array.from({ length: points }, () => fallback);
+  }
+  if (src.length <= points) return src;
+  const step = (src.length - 1) / (points - 1);
+  return Array.from({ length: points }, (_, i) => src[Math.round(i * step)]);
+}
+
+function smoothSeries(values, alpha = 0.35) {
+  if (!values.length) return values;
+  const out = [values[0]];
+  for (let i = 1; i < values.length; i += 1) {
+    const prev = out[i - 1];
+    out.push((values[i] * alpha) + (prev * (1 - alpha)));
+  }
+  return out;
+}
+
+function buildSparklineSvg(coin) {
+  const rawValues = buildMiniSeries(coin, 28);
+  const values = smoothSeries(rawValues, 0.28);
+  const w = 260;
+  const h = 26;
+  const base = values[0] || 1;
+  const pctValues = values.map((v) => ((v - base) / base) * 100);
+  const maxAbs = Math.max(...pctValues.map((v) => Math.abs(v)), 0.4);
+  const scale = Math.max(1.2, Math.min(6, maxAbs * 1.25));
+  const minV = -scale;
+  const maxV = scale;
+  const range = maxV - minV;
+  const step = w / (values.length - 1);
+  const points = pctValues.map((v, i) => {
+    const x = (i * step).toFixed(2);
+    const normalized = (v - minV) / range;
+    const y = (h - normalized * (h - 6) - 3).toFixed(2);
+    return `${x},${y}`;
+  }).join(' ');
+
+  const lastX = ((values.length - 1) * step).toFixed(2);
+  const firstY = (() => {
+    const n = (pctValues[0] - minV) / range;
+    return (h - n * (h - 6) - 3).toFixed(2);
+  })();
+  const areaPath = `M 0,${h - 1} L 0,${firstY} ${points.replace(/ /g, ' L ')} L ${lastX},${h - 1} Z`;
+  const down = pctValues[pctValues.length - 1] < pctValues[0];
+
+  return `
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+      <line class="spark-baseline" x1="0" y1="${h - 1}" x2="${w}" y2="${h - 1}"></line>
+      <line class="spark-grid" x1="0" y1="${(h / 2).toFixed(1)}" x2="${w}" y2="${(h / 2).toFixed(1)}"></line>
+      <path class="${down ? 'spark-fill-down' : 'spark-fill-up'}" d="${areaPath}"></path>
+      <polyline class="${down ? 'spark-line-down' : 'spark-line-up'}" points="${points}"></polyline>
+    </svg>
+  `;
+}
+
+function fundingSignal(ratePct) {
+  const abs = Math.abs(ratePct);
+  if (abs >= 0.03) return { text: 'OVERHEATED', className: 'color:var(--orange)' };
+  if (ratePct > 0.01) return { text: 'BULL LEAN', className: 'color:var(--green)' };
+  if (ratePct < -0.01) return { text: 'BEAR LEAN', className: 'color:var(--red)' };
+  return { text: 'NEUTRAL', className: 'color:var(--yellow)' };
+}
+
+function renderTickerRows(coins) {
+  const wrap = document.getElementById('ticker-table');
+  if (!wrap || !coins || !coins.length) return;
+  wrap.innerHTML = coins.map((coin) => {
+    const change = coin.price_change_percentage_24h || 0;
+    const cls = clsByValue(change);
+    const spark = buildSparklineSvg(coin);
+    return `
+      <div class="ticker-row">
+        <span class="ticker-sym">${coin.icon} ${coin.symbol}</span>
+        <span class="ticker-price ${cls}">${fmtMoney(coin.current_price)}</span>
+        <span class="ticker-change ${cls}">${fmtPct(change)}</span>
+        <span class="ticker-vol">${fmtMoney(coin.total_volume)}</span>
+        <span class="ticker-cap">${fmtMoney(coin.market_cap)}</span>
+        <div class="sparkline">${spark}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderFundingRows(fundingMap) {
+  const wrap = document.getElementById('funding-table');
+  if (!wrap) return;
+  wrap.innerHTML = FUTURES_SYMBOLS.map((sym) => {
+    const raw = fundingMap[sym] ?? 0;
+    const ratePct = raw * 100;
+    const signal = fundingSignal(ratePct);
+    const annualized = ratePct * 3 * 365;
+    const sideClass = ratePct >= 0 ? 'funding-pos' : 'funding-neg';
+    const cls = clsByValue(ratePct);
+    const width = Math.min(48, Math.max(3, Math.abs(ratePct) * 1200));
+    return `
+      <div class="funding-row">
+        <span class="funding-sym">${sym.replace('USDT', '')}</span>
+        <div class="funding-bar-wrap"><div class="funding-bar ${sideClass}" style="width:${width}%;"></div></div>
+        <span class="funding-val ${cls}">${ratePct >= 0 ? '+' : ''}${ratePct.toFixed(4)}%</span>
+        <span class="funding-label" style="${signal.className}">${signal.text} | ${annualized.toFixed(1)}%</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderOiRows(oiMap, priceMap) {
+  const tbody = document.getElementById('oi-table');
+  if (!tbody) return;
+  const rows = FUTURES_SYMBOLS.slice(0, 4).map((sym) => {
+    const asset = sym.replace('USDT', '');
+    const oi = oiMap[sym] || 0;
+    const nowPrice = priceMap[asset] || 0;
+    const prevPrice = lastPriceSnapshot[asset] || nowPrice;
+    const priceChange = prevPrice ? ((nowPrice - prevPrice) / prevPrice) * 100 : 0;
+    const oiPctEstimate = Math.max(-25, Math.min(25, priceChange * 2.5));
+    const clsPrice = clsByValue(priceChange);
+    const signal = (oiPctEstimate >= 0 && priceChange >= 0) ? 'OI↑ PRICE↑ = BULL' : 'MIXED';
+    const badge = signal.includes('BULL') ? 'badge-bull' : 'badge-neu';
+    return { asset, oi, oiPctEstimate, priceChange, clsPrice, signal, badge };
+  });
+
+  const maxOi = Math.max(...rows.map(r => r.oi), 1);
+  tbody.innerHTML = rows.map((r) => `
+    <tr>
+      <td style="color:var(--bright);font-weight:600">${r.asset}</td>
+      <td>${fmtMoney(r.oi)}</td>
+      <td class="${clsByValue(r.oiPctEstimate)}">${fmtPct(r.oiPctEstimate)}</td>
+      <td class="${r.clsPrice}">${fmtPct(r.priceChange)}</td>
+      <td><span class="${r.badge}">${r.signal}</span></td>
+      <td><div class="oi-bar" style="width:${Math.max(6, (r.oi / maxOi) * 100)}%"></div></td>
+    </tr>
+  `).join('');
+}
+
+async function fetchCoinGeckoData() {
+  const ids = ASSETS.map(a => a.id).join(',');
+  const [globalRes, coinsRes] = await Promise.all([
+    fetch('https://api.coingecko.com/api/v3/global', { cache: 'no-store' }),
+    fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&sparkline=true&price_change_percentage=24h`, { cache: 'no-store' })
+  ]);
+  const globalData = await globalRes.json();
+  const coinsData = await coinsRes.json();
+  const iconById = Object.fromEntries(ASSETS.map(a => [a.id, a.icon]));
+  const symbolById = Object.fromEntries(ASSETS.map(a => [a.id, a.symbol]));
+  return {
+    global: globalData.data,
+    coins: coinsData.map(c => ({ ...c, icon: iconById[c.id] || '•', symbol: symbolById[c.id] || c.symbol.toUpperCase() }))
+  };
+}
+
+async function fetchBinanceData() {
+  const fundingRes = await fetch('https://fapi.binance.com/fapi/v1/premiumIndex', { cache: 'no-store' });
+  const fundingAll = await fundingRes.json();
+  const fundingMap = {};
+  const markPriceMap = {};
+  fundingAll.forEach((row) => { fundingMap[row.symbol] = Number(row.lastFundingRate); });
+  fundingAll.forEach((row) => { markPriceMap[row.symbol] = Number(row.markPrice || 0); });
+
+  const oiEntries = await Promise.all(FUTURES_SYMBOLS.map(async (sym) => {
+    const res = await fetch(`https://fapi.binance.com/fapi/v1/openInterest?symbol=${sym}`, { cache: 'no-store' });
+    const data = await res.json();
+    const oiContracts = Number(data.openInterest || 0);
+    const oiValue = oiContracts * (markPriceMap[sym] || 0);
+    return [sym, oiValue];
+  }));
+
+  const lsRes = await fetch('https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=SOLUSDT&period=5m&limit=1', { cache: 'no-store' });
+  const lsData = await lsRes.json();
+  const latestLs = Array.isArray(lsData) && lsData.length ? lsData[0] : null;
+  return {
+    fundingMap,
+    markPriceMap,
+    oiMap: Object.fromEntries(oiEntries),
+    solLsRatio: latestLs ? Number(latestLs.longShortRatio) : null,
+    solLongPct: latestLs ? Number(latestLs.longAccount) * 100 : null,
+    solShortPct: latestLs ? Number(latestLs.shortAccount) * 100 : null,
+    solLsTs: latestLs ? Number(latestLs.timestamp) : Date.now()
+  };
+}
+
+async function fetchFearGreed() {
+  const res = await fetch('https://api.alternative.me/fng/?limit=3&format=json', { cache: 'no-store' });
+  const data = await res.json();
+  return data.data || [];
+}
+
+function updateOverview(global, coins) {
+  const capChange = global.market_cap_change_percentage_24h_usd || 0;
+  document.getElementById('overview-total-cap').textContent = fmtMoney(global.total_market_cap.usd);
+  document.getElementById('overview-total-cap').className = `card-value ${clsByValue(capChange)}`;
+  document.getElementById('overview-total-cap-change').textContent = `${fmtPct(capChange)} (24h)`;
+  document.getElementById('overview-total-cap-change').className = `card-sub ${clsByValue(capChange)}`;
+
+  document.getElementById('overview-btc-dom').textContent = `${(global.market_cap_percentage.btc || 0).toFixed(1)}%`;
+  document.getElementById('overview-btc-dom-change').textContent = 'Доля BTC (глобальные данные CoinGecko)';
+  document.getElementById('overview-total-volume').textContent = fmtMoney(global.total_volume.usd);
+  document.getElementById('overview-total-volume-sub').textContent = 'спотовый объем за 24h';
+
+  renderTickerRows(coins);
+}
+
+function updateDerivatives(fundingMap, oiMap, coins) {
+  const btcFundingPct = (fundingMap.BTCUSDT || 0) * 100;
+  const solFundingPct = (fundingMap.SOLUSDT || 0) * 100;
+  const totalOi = FUTURES_SYMBOLS.reduce((sum, sym) => sum + (oiMap[sym] || 0), 0);
+
+  document.getElementById('deriv-btc-funding').textContent = `${btcFundingPct >= 0 ? '+' : ''}${btcFundingPct.toFixed(4)}%`;
+  document.getElementById('deriv-btc-funding').className = `card-value ${clsByValue(btcFundingPct)}`;
+  document.getElementById('deriv-btc-funding-sub').textContent = fundingSignal(btcFundingPct).text;
+
+  document.getElementById('deriv-sol-funding').textContent = `${solFundingPct >= 0 ? '+' : ''}${solFundingPct.toFixed(4)}%`;
+  document.getElementById('deriv-sol-funding').className = `card-value ${clsByValue(solFundingPct)}`;
+  document.getElementById('deriv-sol-funding-sub').textContent = fundingSignal(solFundingPct).text;
+
+  document.getElementById('deriv-total-oi').textContent = fmtMoney(totalOi);
+  document.getElementById('deriv-total-oi-sub').textContent = 'Актуальный OI Binance futures';
+
+  const priceMap = Object.fromEntries(coins.map(c => [c.symbol, c.current_price]));
+  renderFundingRows(fundingMap);
+  renderOiRows(oiMap, priceMap);
+
+  document.getElementById('sol-deriv-funding').textContent = `${solFundingPct >= 0 ? '+' : ''}${solFundingPct.toFixed(4)}%`;
+  document.getElementById('sol-deriv-funding').className = `card-value ${clsByValue(solFundingPct)}`;
+  document.getElementById('sol-deriv-oi').textContent = fmtMoney(oiMap.SOLUSDT || 0);
+
+  lastPriceSnapshot = priceMap;
+}
+
+function updateSentiment(fgData) {
+  if (!fgData.length) return;
+  const now = Number(fgData[0].value || 0);
+  const prev = Number(fgData[1]?.value || now);
+  const prev2 = Number(fgData[2]?.value || prev);
+  const cls = now > 60 ? 'bullish' : now < 40 ? 'bearish' : 'neutral';
+  const label = fgData[0].value_classification || 'NEUTRAL';
+  document.getElementById('fg-score').textContent = `${now}`;
+  document.getElementById('fg-score').className = `fg-score ${cls}`;
+  document.getElementById('fg-label').textContent = label.toUpperCase();
+  document.getElementById('fg-label').className = `fg-label ${cls}`;
+  document.getElementById('fg-needle').style.left = `${Math.max(0, Math.min(100, now))}%`;
+  document.getElementById('fg-history').innerHTML = `Вчера: <span class="${clsByValue(now - prev)}">${prev}</span> &nbsp;|&nbsp; Прошлая неделя: <span class="${clsByValue(now - prev2)}">${prev2}</span> &nbsp;|&nbsp; Источник: <span class="neutral">Alternative.me</span>`;
+}
+
+function updateSolMonitor(binanceData, coins) {
+  const solCoin = coins.find((c) => c.symbol === 'SOL');
+  const price = Number(solCoin?.current_price || binanceData.markPriceMap.SOLUSDT || NaN);
+  const fundingPct = (binanceData.fundingMap.SOLUSDT || 0) * 100;
+  const oiValue = binanceData.oiMap.SOLUSDT || 0;
+  const lsRatio = binanceData.solLsRatio ?? 1;
+  const longPct = binanceData.solLongPct ?? 50;
+  const shortPct = binanceData.solShortPct ?? 50;
+  const prevPrice = lastPriceSnapshot.SOL || price;
+  const priceChange = prevPrice ? ((price - prevPrice) / prevPrice) * 100 : 0;
+
+  let scenario = 'БЕЗ СДЕЛКИ';
+  let reason = 'RC_NEUTRAL';
+  if (priceChange > 1 && fundingPct > 0 && lsRatio > 1.05) {
+    scenario = 'ПРОДОЛЖЕНИЕ ТРЕНДА';
+    reason = 'RC_MOMENTUM_LONG';
+  } else if (priceChange < -1 && fundingPct < 0 && lsRatio < 0.95) {
+    scenario = 'РИСК ПРОБОЯ ВНИЗ';
+    reason = 'RC_MOMENTUM_SHORT';
+  } else if (Math.abs(priceChange) < 0.6) {
+    scenario = 'ДИАПАЗОН / ОЖИДАНИЕ';
+    reason = 'RC_RANGE';
+  }
+
+  const severity = Math.abs(fundingPct) > 0.02 || Math.abs(priceChange) > 2 ? 'ВЫСОКАЯ' : Math.abs(priceChange) > 1 ? 'СРЕДНЯЯ' : 'НИЗКАЯ';
+  const control = lsRatio > 1.03 ? 'ПОКУПАТЕЛЬ' : lsRatio < 0.97 ? 'ПРОДАВЕЦ' : 'БАЛАНС';
+  const health = Number.isFinite(price) && oiValue > 0 ? 'НОРМА' : 'СНИЖЕНО';
+  const upper = Number.isFinite(price) ? price * 1.02 : NaN;
+  const lower = Number.isFinite(price) ? price * 0.98 : NaN;
+  const updated = new Date(binanceData.solLsTs || Date.now());
+
+  document.getElementById('sol-price').textContent = Number.isNaN(price) ? 'Н/Д' : fmtMoney(price);
+  document.getElementById('sol-scenario').textContent = scenario;
+  document.getElementById('sol-severity').textContent = severity;
+  document.getElementById('sol-context').textContent = `Funding ${fundingPct >= 0 ? '+' : ''}${fundingPct.toFixed(4)}%, OI ${fmtMoney(oiValue)}`;
+  document.getElementById('sol-control').textContent = control;
+  document.getElementById('sol-health').textContent = health;
+  document.getElementById('sol-upper').textContent = Number.isNaN(upper) ? 'Н/Д' : fmtMoney(upper);
+  document.getElementById('sol-lower').textContent = Number.isNaN(lower) ? 'Н/Д' : fmtMoney(lower);
+  document.getElementById('sol-reason').textContent = reason;
+  document.getElementById('sol-time').textContent = updated.toUTCString().slice(17, 25);
+
+  document.getElementById('sol-ls-ratio').textContent = lsRatio.toFixed(2);
+  document.getElementById('sol-ls-ratio').className = `card-value ${clsByValue(lsRatio - 1)}`;
+  document.getElementById('sol-ls-ratio-sub').textContent = `${longPct.toFixed(1)}% лонги / ${shortPct.toFixed(1)}% шорты`;
+
+  const pulseLines = [
+    `Цена SOL ${fmtMoney(price)} (${fmtPct(priceChange)} с прошлого обновления).`,
+    `Funding ${fundingPct >= 0 ? '+' : ''}${fundingPct.toFixed(4)}% (8h), OI ${fmtMoney(oiValue)}.`,
+    `Глобальный long/short ratio ${lsRatio.toFixed(2)} -> контроль: ${control.toLowerCase()}.`,
+    `Смещение: ${scenario.toLowerCase()} | код причины: ${reason}.`
+  ];
+  document.getElementById('sol-pulse').innerHTML = pulseLines.map((line, idx) => `<span style="color:var(--green)">${idx + 1})</span> ${line}`).join('<br/>');
+}
+
+function setLastRefresh(ok) {
+  const t = new Date().toUTCString().slice(17, 25);
+  const el = document.getElementById('last-refresh');
+  el.textContent = `ПОСЛЕДНЕЕ ОБНОВЛЕНИЕ: ${t} UTC ${ok ? '' : '(ЧАСТИЧНО)'}`;
+}
+
+async function refreshTerminal() {
+  let ok = true;
+  const [cgResult, binanceResult, fgResult] = await Promise.allSettled([
+    fetchCoinGeckoData(),
+    fetchBinanceData(),
+    fetchFearGreed()
+  ]);
+
+  const coins = cgResult.status === 'fulfilled'
+    ? cgResult.value.coins
+    : (cachedCoins.length ? cachedCoins : getFallbackCoins());
+
+  if (cgResult.status === 'fulfilled') {
+    updateOverview(cgResult.value.global, cgResult.value.coins);
+    cachedCoins = cgResult.value.coins;
+  } else {
+    ok = false;
+    console.error('CoinGecko недоступен:', cgResult.reason);
+    renderTickerRows(coins);
+  }
+
+  if (binanceResult.status === 'fulfilled') {
+    updateSolMonitor(binanceResult.value, coins);
+    updateDerivatives(binanceResult.value.fundingMap, binanceResult.value.oiMap, coins);
+  } else {
+    ok = false;
+    console.error('Binance недоступен:', binanceResult.reason);
+    const pulse = document.getElementById('sol-pulse');
+    if (pulse) pulse.innerHTML = '<span class="bearish">Поток Binance временно недоступен.</span>';
+  }
+
+  if (fgResult.status === 'fulfilled') {
+    updateSentiment(fgResult.value);
+  } else {
+    ok = false;
+    console.error('Alternative.me недоступен:', fgResult.reason);
+  }
+
+  setLastRefresh(ok);
+}
+
+refreshTerminal();
+setInterval(refreshTerminal, 60000);
+
+if (!cachedCoins.length) {
+  renderTickerRows(getFallbackCoins());
+}
+</script>
+</body>
+</html>
