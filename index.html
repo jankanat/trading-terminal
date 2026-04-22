@@ -87,6 +87,28 @@
     border-radius: 2px;
   }
   .clock { color: var(--green); font-size: var(--fs-sm); }
+  .feed-status {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    max-width: 340px;
+  }
+  .feed-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid var(--border);
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-size: var(--fs-xxs);
+    color: var(--muted);
+    background: rgba(255,255,255,0.015);
+  }
+  .feed-chip.live { color: var(--green); border-color: rgba(0,255,136,0.35); }
+  .feed-chip.cached { color: var(--yellow); border-color: rgba(255,204,0,0.35); }
+  .feed-chip.down { color: var(--red); border-color: rgba(255,51,85,0.35); }
+  .feed-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.9; }
   .live-dot {
     width: 6px; height: 6px; border-radius: 50%;
     background: var(--green);
@@ -367,6 +389,7 @@
     .header-right { gap: 8px; }
     .sources { font-size: var(--fs-xxs); }
     #last-refresh { display: none; }
+    .feed-status { max-width: 210px; }
     .grid-4 { grid-template-columns: repeat(2, 1fr); }
     .grid-3 { grid-template-columns: repeat(2, 1fr); }
     .grid-2 { grid-template-columns: 1fr; }
@@ -381,6 +404,8 @@
     .version { display: none; }
     .header-right { gap: 6px; }
     .sources { display: none; }
+    .feed-status { max-width: 140px; gap: 3px; }
+    .feed-chip { padding: 1px 4px; }
     .clock { font-size: var(--fs-xs); }
     .content { padding: 6px; }
     .section-title { font-size: var(--fs-xs); letter-spacing: 1.2px; margin-bottom: 6px; }
@@ -419,6 +444,7 @@
   </div>
   <div class="header-right">
     <div class="sources">BINANCE / COINGECKO / ALTERNATIVE.ME</div>
+    <div class="feed-status" id="feed-status"></div>
     <div class="sources" id="last-refresh">ПОСЛЕДНЕЕ ОБНОВЛЕНИЕ: --:--:-- UTC</div>
     <div class="clock" id="clock">--:--:--</div>
     <span class="live-dot"></span>
@@ -868,6 +894,11 @@ const ASSETS = [
 const FUTURES_SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'DOGEUSDT'];
 let lastPriceSnapshot = {};
 let cachedCoins = [];
+const feedMeta = {
+  coingecko: { status: 'cached', lastOkTs: 0, label: 'CG' },
+  binance: { status: 'cached', lastOkTs: 0, label: 'BIN' },
+  alternative: { status: 'cached', lastOkTs: 0, label: 'FG' }
+};
 
 function getFallbackCoins() {
   return [
@@ -877,6 +908,36 @@ function getFallbackCoins() {
     { id: 'binancecoin', symbol: 'BNB', icon: '◆', current_price: 643, price_change_percentage_24h: 0.4, total_volume: 1200000000, market_cap: 94000000000, sparkline_in_7d: { price: [635, 637, 639, 641, 640, 642, 643] } },
     { id: 'ripple', symbol: 'XRP', icon: '✦', current_price: 1.45, price_change_percentage_24h: -0.2, total_volume: 3200000000, market_cap: 85000000000, sparkline_in_7d: { price: [1.48, 1.47, 1.46, 1.45, 1.45, 1.44, 1.45] } }
   ];
+}
+
+function utcHms(ts) {
+  if (!ts) return '--:--:--';
+  return new Date(ts).toUTCString().slice(17, 25);
+}
+
+function refreshStaleStates() {
+  const now = Date.now();
+  Object.keys(feedMeta).forEach((k) => {
+    const f = feedMeta[k];
+    if (f.status === 'down') return;
+    if (!f.lastOkTs) {
+      f.status = 'down';
+      return;
+    }
+    if (now - f.lastOkTs > 180000) f.status = 'cached';
+  });
+}
+
+function renderFeedStatus() {
+  refreshStaleStates();
+  const el = document.getElementById('feed-status');
+  if (!el) return;
+  const chips = ['coingecko', 'binance', 'alternative'].map((k) => {
+    const f = feedMeta[k];
+    const statusText = f.status === 'live' ? 'LIVE' : f.status === 'cached' ? 'CACHED' : 'DOWN';
+    return `<span class="feed-chip ${f.status}"><span class="feed-dot"></span>${f.label}:${statusText} ${utcHms(f.lastOkTs)}</span>`;
+  }).join('');
+  el.innerHTML = chips;
 }
 
 function fmtMoney(value) {
@@ -1225,29 +1286,39 @@ async function refreshTerminal() {
   if (cgResult.status === 'fulfilled') {
     updateOverview(cgResult.value.global, cgResult.value.coins);
     cachedCoins = cgResult.value.coins;
+    feedMeta.coingecko.status = 'live';
+    feedMeta.coingecko.lastOkTs = Date.now();
   } else {
     ok = false;
     console.error('CoinGecko недоступен:', cgResult.reason);
     renderTickerRows(coins);
+    feedMeta.coingecko.status = cachedCoins.length ? 'cached' : 'down';
   }
 
   if (binanceResult.status === 'fulfilled') {
     updateSolMonitor(binanceResult.value, coins);
     updateDerivatives(binanceResult.value.fundingMap, binanceResult.value.oiMap, coins);
+    feedMeta.binance.status = 'live';
+    feedMeta.binance.lastOkTs = Date.now();
   } else {
     ok = false;
     console.error('Binance недоступен:', binanceResult.reason);
     const pulse = document.getElementById('sol-pulse');
     if (pulse) pulse.innerHTML = '<span class="bearish">Поток Binance временно недоступен.</span>';
+    feedMeta.binance.status = 'down';
   }
 
   if (fgResult.status === 'fulfilled') {
     updateSentiment(fgResult.value);
+    feedMeta.alternative.status = 'live';
+    feedMeta.alternative.lastOkTs = Date.now();
   } else {
     ok = false;
     console.error('Alternative.me недоступен:', fgResult.reason);
+    feedMeta.alternative.status = 'down';
   }
 
+  renderFeedStatus();
   setLastRefresh(ok);
 }
 
@@ -1257,6 +1328,7 @@ setInterval(refreshTerminal, 60000);
 if (!cachedCoins.length) {
   renderTickerRows(getFallbackCoins());
 }
+renderFeedStatus();
 </script>
 </body>
 </html>
