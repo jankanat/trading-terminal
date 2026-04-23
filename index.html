@@ -1090,6 +1090,39 @@ function updateRiskOpportunityFromNews(headlines) {
   if (oEl) oEl.innerHTML = `${opps.join('<br/>')}<br/><span style="color:var(--muted);font-size:8px">обновлено ${fmtUtcHm(Date.now())} UTC · последняя новость ${fmtUtcHm(latestPub)} UTC</span>`;
 }
 
+function updateRiskOpportunityFromMarket(coins, binanceData, fgData) {
+  const btc = coins.find((c) => c.symbol === 'BTC') || {};
+  const eth = coins.find((c) => c.symbol === 'ETH') || {};
+  const sol = coins.find((c) => c.symbol === 'SOL') || {};
+  const fg = Number(fgData?.[0]?.value || 50);
+  const solFunding = Number((binanceData?.fundingMap?.SOLUSDT || 0) * 100);
+  const solLs = Number(binanceData?.solLsRatio || 1);
+  const totalOi = Object.values(binanceData?.oiMap || {}).reduce((s, v) => s + Number(v || 0), 0);
+
+  const risks = [];
+  const opps = [];
+  if ((btc.price_change_percentage_24h || 0) < -1.2) risks.push(`› BTC ${fmtPct(btc.price_change_percentage_24h, 2)} — усиливается pressure по рынку`);
+  if (solFunding > 0.025) risks.push(`› Funding SOL ${solFunding.toFixed(4)}% — риск перегрева лонгов`);
+  if (solLs > 1.25) risks.push(`› L/S SOL ${solLs.toFixed(2)} — толпа перекошена в long`);
+  if (fg > 75) risks.push(`› Fear&Greed ${fg} — эйфория, риск резкого отката`);
+  if (totalOi > 45000000000) risks.push(`› OI ${fmtMoney(totalOi)} — повышенный риск ликвидаций`);
+
+  if ((btc.price_change_percentage_24h || 0) > 0.8) opps.push(`› BTC ${fmtPct(btc.price_change_percentage_24h, 2)} — импульс risk-on сохраняется`);
+  if ((sol.price_change_percentage_24h || 0) > 1.5) opps.push(`› SOL ${fmtPct(sol.price_change_percentage_24h, 2)} — спрос в high-beta секторе`);
+  if (solFunding < 0.01) opps.push(`› Funding SOL ${solFunding.toFixed(4)}% — рынок без сильного перегрева`);
+  if (solLs >= 0.95 && solLs <= 1.12) opps.push(`› L/S SOL ${solLs.toFixed(2)} — баланс позиций, чище входы`);
+  if (fg >= 45 && fg <= 68) opps.push(`› Fear&Greed ${fg} — рабочая зона без экстремумов`);
+
+  if (!risks.length) risks.push('› Рынок без выраженных risk-триггеров по live-метрикам.');
+  if (!opps.length) opps.push('› Сильных bullish-триггеров сейчас нет, режим ожидания.');
+
+  const rEl = document.getElementById('risk-list');
+  const oEl = document.getElementById('opportunity-list');
+  const stamp = `<span style="color:var(--muted);font-size:8px">обновлено ${fmtUtcHm(Date.now())} UTC · source market-live</span>`;
+  if (rEl) rEl.innerHTML = `${risks.slice(0, 4).join('<br/>')}<br/>${stamp}`;
+  if (oEl) oEl.innerHTML = `${opps.slice(0, 4).join('<br/>')}<br/>${stamp}`;
+}
+
 function markNewsStale(reason = 'лента недоступна') {
   const stale = `<span style="color:var(--orange);font-size:8px">stale: ${reason}${newsLastOkTs ? ` · last ok ${fmtUtcHm(newsLastOkTs)} UTC` : ''}</span>`;
   const rEl = document.getElementById('risk-list');
@@ -1788,6 +1821,9 @@ async function refreshTerminal() {
       console.warn('Лента новостей недоступна:', e);
       newsStatus = 'stale';
       const reason = String(e?.message || 'rss/proxy').toLowerCase().replace(/_/g, '-');
+      if (binanceResult.status === 'fulfilled') {
+        updateRiskOpportunityFromMarket(coins, binanceResult.value, fgResult.status === 'fulfilled' ? fgResult.value : null);
+      }
       markNewsStale(reason);
     }
   }
