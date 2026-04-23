@@ -830,17 +830,17 @@
   </div>
 
   <div class="section-title">СЦЕНАРИИ</div>
-  <div class="scenario active-sc">
-    <div class="scenario-title">◆ СЦЕНАРИЙ 1 — ПРОДОЛЖЕНИЕ (АКТИВЕН)</div>
-    <div class="scenario-body">Покупатель удерживает контроль на 4h. Цена консолидируется выше 131.80. Ждем подтверждение на 1h выше 140.20 для long-входа. Цель: зона 148-152.</div>
+  <div class="scenario active-sc" id="scenario-card-1">
+    <div class="scenario-title" id="scenario-title-1">◆ СЦЕНАРИЙ 1 — ПРОДОЛЖЕНИЕ (АКТИВЕН)</div>
+    <div class="scenario-body" id="scenario-body-1">Покупатель удерживает контроль на 4h. Цена консолидируется выше 131.80. Ждем подтверждение на 1h выше 140.20 для long-входа. Цель: зона 148-152.</div>
   </div>
-  <div class="scenario">
-    <div class="scenario-title">◇ СЦЕНАРИЙ 2 — АБСОРБЦИЯ</div>
-    <div class="scenario-body">Цена агрессивно тестирует поддержку 131.80. Если уровень удерживается и есть абсорбция покупателя на 15m — возможен вход в разворот. Риск: invalidation ниже 127.50.</div>
+  <div class="scenario" id="scenario-card-2">
+    <div class="scenario-title" id="scenario-title-2">◇ СЦЕНАРИЙ 2 — АБСОРБЦИЯ</div>
+    <div class="scenario-body" id="scenario-body-2">Цена агрессивно тестирует поддержку 131.80. Если уровень удерживается и есть абсорбция покупателя на 15m — возможен вход в разворот. Риск: invalidation ниже 127.50.</div>
   </div>
-  <div class="scenario">
-    <div class="scenario-title">⚠ СЦЕНАРИЙ 3 — ЗОНА РИСКА</div>
-    <div class="scenario-body">Пробой 131.80 вниз на объеме. Контроль переходит к продавцу. Без сделки — ждем новую структуру. Потенциальная цель: зона 118-120.</div>
+  <div class="scenario" id="scenario-card-3">
+    <div class="scenario-title" id="scenario-title-3">⚠ СЦЕНАРИЙ 3 — ЗОНА РИСКА</div>
+    <div class="scenario-body" id="scenario-body-3">Пробой 131.80 вниз на объеме. Контроль переходит к продавцу. Без сделки — ждем новую структуру. Потенциальная цель: зона 118-120.</div>
   </div>
 
   <div class="section-title">SOL ДЕРИВАТИВЫ</div>
@@ -1409,6 +1409,38 @@ function updateSolMonitor(binanceData, coins) {
   document.getElementById('sol-ls-ratio').textContent = lsRatio.toFixed(2);
   document.getElementById('sol-ls-ratio').className = `card-value ${clsByValue(lsRatio - 1)}`;
   document.getElementById('sol-ls-ratio-sub').textContent = `${longPct.toFixed(1)}% лонги / ${shortPct.toFixed(1)}% шорты`;
+
+  const scenarioData = [
+    {
+      key: 'trend',
+      title: '◆ СЦЕНАРИЙ 1 — ПРОДОЛЖЕНИЕ',
+      body: `Покупатель удерживает контроль. Цена ${fmtMoney(price)} выше ключевых зон. При закреплении выше ${fmtMoney(upper)} возможен long-вход. Цель: импульсное продолжение.`,
+      active: scenario === 'ПРОДОЛЖЕНИЕ ТРЕНДА'
+    },
+    {
+      key: 'range',
+      title: '◇ СЦЕНАРИЙ 2 — ДИАПАЗОН / ОЖИДАНИЕ',
+      body: `Рынок в балансе. Базовый диапазон: ${fmtMoney(lower)} - ${fmtMoney(upper)}. Ждем выход из боковика и подтверждение объема.`,
+      active: scenario === 'ДИАПАЗОН / ОЖИДАНИЕ' || scenario === 'БЕЗ СДЕЛКИ'
+    },
+    {
+      key: 'risk',
+      title: '⚠ СЦЕНАРИЙ 3 — ЗОНА РИСКА',
+      body: `При уходе ниже ${fmtMoney(lower)} усиливается давление продавца. Приоритет — защита капитала, поиск новой структуры после слома.`,
+      active: scenario === 'РИСК ПРОБОЯ ВНИЗ'
+    }
+  ];
+
+  scenarioData.forEach((s, idx) => {
+    const i = idx + 1;
+    const card = document.getElementById(`scenario-card-${i}`);
+    const titleEl = document.getElementById(`scenario-title-${i}`);
+    const bodyEl = document.getElementById(`scenario-body-${i}`);
+    if (!card || !titleEl || !bodyEl) return;
+    card.classList.toggle('active-sc', !!s.active);
+    titleEl.textContent = s.active ? `${s.title} (АКТИВЕН)` : s.title;
+    bodyEl.textContent = s.body;
+  });
 
   const pulseLines = [
     `Цена SOL ${fmtMoney(price)} (${fmtPct(priceChange)} с прошлого обновления).`,
