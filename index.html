@@ -1009,13 +1009,45 @@ async function fetchRssHeadlines() {
     'https://www.coindesk.com/arc/outboundfeeds/rss/'
   ];
   const cacheBuster = Math.floor(Date.now() / 60000);
-  const xmlList = await Promise.all(urls.map(async (url) => {
+  const fetchXmlWithFallback = async (url) => {
     const bustedUrl = `${url}${url.includes('?') ? '&' : '?'}_cb=${cacheBuster}`;
-    const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(bustedUrl)}`;
-    const res = await fetch(proxy, { cache: 'no-store' });
-    if (!res.ok) throw new Error(`RSS_${res.status}`);
-    return res.text();
-  }));
+    const providers = [
+      async () => {
+        const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(bustedUrl)}`;
+        const res = await fetch(proxy, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`ALLORIGINS_${res.status}`);
+        return res.text();
+      },
+      async () => {
+        const proxy = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=20`;
+        const res = await fetch(proxy, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`RSS2JSON_${res.status}`);
+        const data = await res.json();
+        if (!data?.items?.length) throw new Error('RSS2JSON_EMPTY');
+        const itemsXml = data.items.map((it) => {
+          const title = (it.title || '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+          const pubDate = it.pubDate || '';
+          return `<item><title>${title}</title><pubDate>${pubDate}</pubDate></item>`;
+        }).join('');
+        return `<rss><channel>${itemsXml}</channel></rss>`;
+      }
+    ];
+    let lastErr = null;
+    for (const p of providers) {
+      try {
+        return await p();
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw lastErr || new Error('RSS_UNAVAILABLE');
+  };
+
+  const settledXml = await Promise.allSettled(urls.map((url) => fetchXmlWithFallback(url)));
+  const xmlList = settledXml
+    .filter((r) => r.status === 'fulfilled')
+    .map((r) => r.value);
+  if (!xmlList.length) throw new Error('RSS_ALL_PROVIDERS_FAILED');
 
   const headlines = [];
   xmlList.forEach((xml) => {
@@ -1031,7 +1063,9 @@ async function fetchRssHeadlines() {
   const unique = Array.from(new Map(headlines.map((h) => [h.title.toLowerCase(), h])).values());
   unique.sort((a, b) => b.pub - a.pub);
   const freshCutoff = Date.now() - (72 * 60 * 60 * 1000);
-  return unique.filter((h) => h.pub >= freshCutoff).slice(0, 20);
+  const fresh = unique.filter((h) => h.pub >= freshCutoff).slice(0, 20);
+  if (!fresh.length) throw new Error('RSS_NO_FRESH_ITEMS');
+  return fresh;
 }
 
 function updateRiskOpportunityFromNews(headlines) {
@@ -1753,7 +1787,8 @@ async function refreshTerminal() {
     } catch (e) {
       console.warn('Лента новостей недоступна:', e);
       newsStatus = 'stale';
-      markNewsStale('rss/proxy');
+      const reason = String(e?.message || 'rss/proxy').toLowerCase().replace(/_/g, '-');
+      markNewsStale(reason);
     }
   }
   if (nowTs - whaleLastUpdateTs >= WHALE_REFRESH_MS) {
