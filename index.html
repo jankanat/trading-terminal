@@ -503,7 +503,7 @@
   <div class="grid-2">
     <div style="background:var(--bg3);border:1px solid var(--border);padding:12px;">
       <div style="color:var(--red);font-size:10px;letter-spacing:1px;margin-bottom:8px;">▼ КЛЮЧЕВЫЕ РИСКИ</div>
-      <div style="font-size:10px;line-height:2;color:var(--text);">
+      <div style="font-size:10px;line-height:2;color:var(--text);" id="risk-list">
         › Действия SEC — регуляторная неопределенность<br/>
         › Рост доминации BTC → давление на альткоины<br/>
         › Макро-встречный ветер — усиление DXY<br/>
@@ -512,7 +512,7 @@
     </div>
     <div style="background:var(--bg3);border:1px solid var(--border);padding:12px;">
       <div style="color:var(--green);font-size:10px;letter-spacing:1px;margin-bottom:8px;">▲ КЛЮЧЕВЫЕ ВОЗМОЖНОСТИ</div>
-      <div style="font-size:10px;line-height:2;color:var(--text);">
+      <div style="font-size:10px;line-height:2;color:var(--text);" id="opportunity-list">
         › Притоки в ETF ускоряются — институциональный спрос<br/>
         › Рост экосистемы SOL — TVL в DeFi увеличивается<br/>
         › Импульс халвинг-цикла — исторически bullish<br/>
@@ -628,7 +628,7 @@
 
   <div class="section-title">АКТИВНОСТЬ КИТОВ (ПОСЛЕДНИЕ 24H)</div>
   <div style="background:var(--bg3);border:1px solid var(--border);padding:12px;margin-bottom:10px;">
-    <div style="font-size:10px;line-height:2.2;color:var(--text);">
+    <div style="font-size:10px;line-height:2.2;color:var(--text);" id="whale-activity-feed">
       <span style="color:var(--muted)">04:18 UTC</span> &nbsp; <span class="bullish">▲</span> &nbsp; Неизвестный кошелек перевел <span class="bullish">12,480 BTC</span> в cold storage — Coinbase custody<br/>
       <span style="color:var(--muted)">07:42 UTC</span> &nbsp; <span class="bearish">▼</span> &nbsp; <span class="bearish">8,200 ETH</span> переведены на Binance с whale-кошелька (возможная продажа)<br/>
       <span style="color:var(--muted)">09:15 UTC</span> &nbsp; <span class="bullish">▲</span> &nbsp; MicroStrategy сообщила о дополнительной покупке <span class="bullish">2,000 BTC</span><br/>
@@ -897,6 +897,10 @@ let cachedCoins = [];
 let cachedGlobal = null;
 let cgBackoffUntilTs = 0;
 let cgLastErrorCode = '';
+let newsLastUpdateTs = 0;
+let whaleLastUpdateTs = 0;
+const NEWS_REFRESH_MS = 15 * 60 * 1000;
+const WHALE_REFRESH_MS = 5 * 60 * 1000;
 const feedMeta = {
   coingecko: { status: 'cached', lastOkTs: 0, label: 'CG' },
   binance: { status: 'cached', lastOkTs: 0, label: 'BIN' },
@@ -986,6 +990,103 @@ function renderFeedStatus() {
     return `<span class="feed-chip ${f.status}"><span class="feed-dot"></span>${f.label}:${statusText}${reason} ${utcHms(f.lastOkTs)}</span>`;
   }).join('');
   el.innerHTML = chips;
+}
+
+function fmtUtcHm(ts) {
+  return new Date(ts).toUTCString().slice(17, 22);
+}
+
+async function fetchRssHeadlines() {
+  const urls = [
+    'https://forklog.com/feed',
+    'https://www.coindesk.com/arc/outboundfeeds/rss/'
+  ];
+  const xmlList = await Promise.all(urls.map(async (url) => {
+    const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxy, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`RSS_${res.status}`);
+    return res.text();
+  }));
+
+  const headlines = [];
+  xmlList.forEach((xml) => {
+    const doc = new DOMParser().parseFromString(xml, 'text/xml');
+    const items = Array.from(doc.querySelectorAll('item')).slice(0, 15);
+    items.forEach((it) => {
+      const title = (it.querySelector('title')?.textContent || '').trim();
+      const pub = Date.parse(it.querySelector('pubDate')?.textContent || '') || Date.now();
+      if (title) headlines.push({ title, pub });
+    });
+  });
+
+  headlines.sort((a, b) => b.pub - a.pub);
+  return headlines.slice(0, 20);
+}
+
+function updateRiskOpportunityFromNews(headlines) {
+  if (!headlines.length) return;
+  const riskKeywords = /(sec|lawsuit|hack|exploit|ban|sell|outflow|liquidation|war|tariff|drop|bear|risk|dump|санкц|запрет|взлом|паден|распрод|отток)/i;
+  const oppKeywords = /(etf|inflow|adoption|partnership|launch|upgrade|approval|buy|accumulation|growth|bull|surge|листинг|приток|рост|одобр|покупк|интеграц)/i;
+
+  const risks = [];
+  const opps = [];
+  headlines.forEach((h) => {
+    if (riskKeywords.test(h.title) && risks.length < 4) risks.push(`› ${h.title}`);
+    if (oppKeywords.test(h.title) && opps.length < 4) opps.push(`› ${h.title}`);
+  });
+
+  if (!risks.length) risks.push('› Рынок без ярко выраженных негативных триггеров по новостям.');
+  if (!opps.length) opps.push('› Рынок без сильных позитивных триггеров по новостям.');
+
+  const rEl = document.getElementById('risk-list');
+  const oEl = document.getElementById('opportunity-list');
+  if (rEl) rEl.innerHTML = `${risks.join('<br/>')}<br/><span style="color:var(--muted);font-size:8px">обновлено ${fmtUtcHm(Date.now())} UTC</span>`;
+  if (oEl) oEl.innerHTML = `${opps.join('<br/>')}<br/><span style="color:var(--muted);font-size:8px">обновлено ${fmtUtcHm(Date.now())} UTC</span>`;
+}
+
+async function fetchWhaleTape() {
+  const specs = [
+    { sym: 'BTCUSDT', thr: 1_500_000 },
+    { sym: 'ETHUSDT', thr: 700_000 },
+    { sym: 'SOLUSDT', thr: 350_000 }
+  ];
+  const rows = [];
+
+  for (const s of specs) {
+    const res = await fetch(`https://fapi.binance.com/fapi/v1/aggTrades?symbol=${s.sym}&limit=120`, { cache: 'no-store' });
+    if (!res.ok) continue;
+    const list = await res.json();
+    list.forEach((t) => {
+      const price = Number(t.p);
+      const qty = Number(t.q);
+      const notional = price * qty;
+      if (notional < s.thr) return;
+      rows.push({
+        ts: Number(t.T),
+        sym: s.sym.replace('USDT', ''),
+        side: t.m ? 'sell' : 'buy',
+        notional,
+        qty
+      });
+    });
+  }
+  rows.sort((a, b) => b.ts - a.ts);
+  return rows.slice(0, 5);
+}
+
+function updateWhaleActivity(rows) {
+  const el = document.getElementById('whale-activity-feed');
+  if (!el) return;
+  if (!rows.length) {
+    el.innerHTML = '<span style="color:var(--muted)">Нет новых крупных сделок. Обновление позже.</span>';
+    return;
+  }
+  el.innerHTML = rows.map((r) => {
+    const sign = r.side === 'buy' ? '▲' : '▼';
+    const cls = r.side === 'buy' ? 'bullish' : 'bearish';
+    const sideText = r.side === 'buy' ? 'агрессивная покупка' : 'агрессивная продажа';
+    return `<span style="color:var(--muted)">${fmtUtcHm(r.ts)} UTC</span> &nbsp; <span class="${cls}">${sign}</span> &nbsp; Крупная сделка <span class="${cls}">${r.sym}</span>: <span class="${cls}">${fmtMoney(r.notional)}</span> (${sideText})`;
+  }).join('<br/>') + `<br/><span style="color:var(--muted);font-size:8px">обновлено ${fmtUtcHm(Date.now())} UTC</span>`;
 }
 
 function fmtMoney(value) {
@@ -1383,6 +1484,26 @@ async function refreshTerminal() {
     ok = false;
     console.error('Alternative.me недоступен:', fgResult.reason);
     feedMeta.alternative.status = 'down';
+  }
+
+  const nowTs = Date.now();
+  if (nowTs - newsLastUpdateTs >= NEWS_REFRESH_MS) {
+    try {
+      const headlines = await fetchRssHeadlines();
+      updateRiskOpportunityFromNews(headlines);
+      newsLastUpdateTs = nowTs;
+    } catch (e) {
+      console.warn('Лента новостей недоступна:', e);
+    }
+  }
+  if (nowTs - whaleLastUpdateTs >= WHALE_REFRESH_MS) {
+    try {
+      const whaleRows = await fetchWhaleTape();
+      updateWhaleActivity(whaleRows);
+      whaleLastUpdateTs = nowTs;
+    } catch (e) {
+      console.warn('Whale tape недоступен:', e);
+    }
   }
 
   renderFeedStatus();
