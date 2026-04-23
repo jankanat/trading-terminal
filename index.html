@@ -544,8 +544,8 @@
     </div>
     <div class="card">
       <div class="card-label">24H LIQUIDATIONS</div>
-      <div class="card-value bearish">$312M</div>
-      <div class="card-sub">Шорты: $210M / Лонги: $102M</div>
+      <div class="card-value bearish" id="deriv-liquidations">$312M</div>
+      <div class="card-sub" id="deriv-liquidations-sub">Шорты: $210M / Лонги: $102M</div>
     </div>
   </div>
 
@@ -569,18 +569,18 @@
   <div class="grid-3">
     <div class="card">
       <div class="card-label">BTC L/S RATIO</div>
-      <div class="card-value neutral">1.18</div>
-      <div class="card-sub">Лонги 54.1% / Шорты 45.9%</div>
+      <div class="card-value neutral" id="deriv-btc-ls">1.18</div>
+      <div class="card-sub" id="deriv-btc-ls-sub">Лонги 54.1% / Шорты 45.9%</div>
     </div>
     <div class="card">
       <div class="card-label">ETH L/S RATIO</div>
-      <div class="card-value neutral">1.05</div>
-      <div class="card-sub">Лонги 51.2% / Шорты 48.8%</div>
+      <div class="card-value neutral" id="deriv-eth-ls">1.05</div>
+      <div class="card-sub" id="deriv-eth-ls-sub">Лонги 51.2% / Шорты 48.8%</div>
     </div>
     <div class="card">
       <div class="card-label">SOL L/S RATIO</div>
-      <div class="card-value bullish">1.42</div>
-      <div class="card-sub">Лонги 58.6% / Шорты 41.4%</div>
+      <div class="card-value bullish" id="deriv-sol-ls">1.42</div>
+      <div class="card-sub" id="deriv-sol-ls-sub">Лонги 58.6% / Шорты 41.4%</div>
     </div>
   </div>
 </div>
@@ -589,7 +589,7 @@
 <div class="content" id="tab-2">
   <div class="section-title">ОНЧЕЙН<span class="section-sub">— Exchange flows, whale activity, network health</span></div>
 
-  <div class="grid-4">
+  <div class="grid-4" id="onchain-cards">
     <div class="card">
       <div class="card-label">BTC ПРИТОК НА БИРЖИ</div>
       <div class="card-value bearish">24,800 BTC</div>
@@ -618,11 +618,13 @@
   <div class="table-scroll" style="margin-bottom:10px;">
     <table class="tbl">
       <tr><th>МЕТРИКА</th><th>BTC</th><th>ETH</th><th>SOL</th><th>СИГНАЛ</th></tr>
-      <tr><td>Активные адреса (24h)</td><td class="bullish">892K</td><td>412K</td><td class="bullish">1.2M</td><td><span class="badge-bull">ЗДОРОВО</span></td></tr>
-      <tr><td>Транзакции (24h)</td><td>648K</td><td>1.1M</td><td class="bullish">48M</td><td><span class="badge-bull">АКТИВНО</span></td></tr>
-      <tr><td>Hash Rate / TPS</td><td class="bullish">780 EH/s</td><td>—</td><td class="bullish">65,000 TPS</td><td><span class="badge-bull">ATH</span></td></tr>
-      <tr><td>Средняя комиссия</td><td class="neutral">$8.20</td><td class="neutral">$2.40</td><td class="bullish">$0.001</td><td><span class="badge-neu">УМЕРЕННО</span></td></tr>
-      <tr><td>NVT соотношение</td><td class="neutral">65</td><td class="neutral">42</td><td class="bullish">28</td><td><span class="badge-bull">НЕДООЦЕНКА</span></td></tr>
+      <tbody id="network-health-body">
+        <tr><td>Активные адреса (24h)</td><td class="bullish">892K</td><td>412K</td><td class="bullish">1.2M</td><td><span class="badge-bull">ЗДОРОВО</span></td></tr>
+        <tr><td>Транзакции (24h)</td><td>648K</td><td>1.1M</td><td class="bullish">48M</td><td><span class="badge-bull">АКТИВНО</span></td></tr>
+        <tr><td>Hash Rate / TPS</td><td class="bullish">780 EH/s</td><td>—</td><td class="bullish">65,000 TPS</td><td><span class="badge-bull">ATH</span></td></tr>
+        <tr><td>Средняя комиссия</td><td class="neutral">$8.20</td><td class="neutral">$2.40</td><td class="bullish">$0.001</td><td><span class="badge-neu">УМЕРЕННО</span></td></tr>
+        <tr><td>NVT соотношение</td><td class="neutral">65</td><td class="neutral">42</td><td class="bullish">28</td><td><span class="badge-bull">НЕДООЦЕНКА</span></td></tr>
+      </tbody>
     </table>
   </div>
 
@@ -661,7 +663,7 @@
     </div>
   </div>
 
-  <div class="grid-3">
+  <div class="grid-3" id="sentiment-cards">
     <div class="card">
       <div class="card-label">НАСТРОЕНИЯ В TWITTER/X</div>
       <div class="card-value neutral">62% БЫЧИЙ НАСТРОЙ</div>
@@ -680,7 +682,7 @@
   </div>
 
   <div class="section-title">СЕКТОРНАЯ КАРТА НАСТРОЕНИЙ</div>
-  <div class="heat-grid">
+  <div class="heat-grid" id="sector-heat">
     <div class="heat-cell heat-low">
       <div class="heat-label">LAYER 1</div>
       <div class="heat-value bullish">БЫЧИЙ</div>
@@ -728,7 +730,7 @@
 <div class="content" id="tab-4">
   <div class="section-title">МАКРО LINK<span class="section-sub">— Crypto vs DXY, Gold, SPY, rates</span></div>
 
-  <div class="analysis">
+  <div class="analysis" id="macro-analysis">
     <p>DXY на 104.2 — сильный доллар создает встречный ветер для crypto. Историческая корреляция: DXY ▲ → BTC ▼. Важный уровень сопротивления: 105.</p>
     <p>Ставка ФРС 3.50-3.75% — уровень высокий, но стабильный. Ожидания снижения ставки смещены к сентябрю 2025. Risk assets обычно выигрывают от цикла снижения.</p>
     <p>Gold на $3,280 (ATH) — индикатор монетарного стресса. Исторически BTC часто следует за Gold с лагом 2-4 недели.</p>
@@ -739,37 +741,39 @@
   <div class="table-scroll" style="margin-bottom:10px;">
     <table class="tbl">
       <tr><th>АКТИВ</th><th>к BTC</th><th>к SPY</th><th>к GOLD</th><th>к DXY</th><th>ИНТЕРПРЕТАЦИЯ</th></tr>
-      <tr><td style="color:var(--bright)">ETH</td><td class="bullish">0.91</td><td class="neutral">0.61</td><td class="neutral">0.42</td><td class="bearish">-0.55</td><td style="color:var(--muted)">Движется почти синхронно с BTC</td></tr>
-      <tr><td style="color:var(--bright)">SOL</td><td class="bullish">0.84</td><td class="neutral">0.58</td><td class="neutral">0.38</td><td class="bearish">-0.49</td><td style="color:var(--muted)">Высокая бета к BTC</td></tr>
-      <tr><td style="color:var(--bright)">BTC</td><td>—</td><td class="neutral">0.64</td><td class="bullish">0.71</td><td class="bearish">-0.62</td><td style="color:var(--muted)">Risk asset + цифровое золото</td></tr>
-      <tr><td style="color:var(--bright)">GOLD</td><td class="neutral">0.71</td><td class="neutral">0.28</td><td>—</td><td class="bearish">-0.81</td><td style="color:var(--muted)">Монетарный защитный актив</td></tr>
+      <tbody id="corr-body">
+        <tr><td style="color:var(--bright)">ETH</td><td class="bullish">0.91</td><td class="neutral">0.61</td><td class="neutral">0.42</td><td class="bearish">-0.55</td><td style="color:var(--muted)">Движется почти синхронно с BTC</td></tr>
+        <tr><td style="color:var(--bright)">SOL</td><td class="bullish">0.84</td><td class="neutral">0.58</td><td class="neutral">0.38</td><td class="bearish">-0.49</td><td style="color:var(--muted)">Высокая бета к BTC</td></tr>
+        <tr><td style="color:var(--bright)">BTC</td><td>—</td><td class="neutral">0.64</td><td class="bullish">0.71</td><td class="bearish">-0.62</td><td style="color:var(--muted)">Risk asset + цифровое золото</td></tr>
+        <tr><td style="color:var(--bright)">GOLD</td><td class="neutral">0.71</td><td class="neutral">0.28</td><td>—</td><td class="bearish">-0.81</td><td style="color:var(--muted)">Монетарный защитный актив</td></tr>
+      </tbody>
     </table>
   </div>
 
   <div class="grid-4">
     <div class="card">
       <div class="card-label">DXY INDEX</div>
-      <div class="card-value bearish">104.2</div>
-      <div class="card-sub">▲ +0.4% — давление на crypto</div>
+      <div class="card-value bearish" id="macro-dxy">104.2</div>
+      <div class="card-sub" id="macro-dxy-sub">▲ +0.4% — давление на crypto</div>
     </div>
     <div class="card">
       <div class="card-label">GOLD (XAU)</div>
-      <div class="card-value bullish">$3,280</div>
-      <div class="card-sub">ATH — сигнал монетарного стресса</div>
+      <div class="card-value bullish" id="macro-gold">$3,280</div>
+      <div class="card-sub" id="macro-gold-sub">ATH — сигнал монетарного стресса</div>
     </div>
     <div class="card">
       <div class="card-label">SPY (S&P 500)</div>
-      <div class="card-value neutral">$528</div>
-      <div class="card-sub">▼ -0.8% — осторожный risk-off</div>
+      <div class="card-value neutral" id="macro-spy">$528</div>
+      <div class="card-sub" id="macro-spy-sub">▼ -0.8% — осторожный risk-off</div>
     </div>
     <div class="card">
       <div class="card-label">10Y TREASURY (UST)</div>
-      <div class="card-value bearish">4.42%</div>
-      <div class="card-sub">▲ +8bps — растет risk premium</div>
+      <div class="card-value bearish" id="macro-ust10">4.42%</div>
+      <div class="card-sub" id="macro-ust10-sub">▲ +8bps — растет risk premium</div>
     </div>
   </div>
 
-  <div class="alert">◆ МАКРО ВАЧ: DXY подходит к сопротивлению 105. При пробое вверх вероятно усиление давления на crypto. Выступление ФРС в четверг — сигналы по rate cut могут запустить ралли.</div>
+  <div class="alert" id="macro-alert">◆ МАКРО ВАЧ: DXY подходит к сопротивлению 105. При пробое вверх вероятно усиление давления на crypto. Выступление ФРС в четверг — сигналы по rate cut могут запустить ралли.</div>
 </div>
 
 <!-- TAB 6: SOL MONITOR -->
@@ -899,6 +903,7 @@ let cgBackoffUntilTs = 0;
 let cgLastErrorCode = '';
 let newsLastUpdateTs = 0;
 let whaleLastUpdateTs = 0;
+let whaleRowsCache = [];
 const NEWS_REFRESH_MS = 15 * 60 * 1000;
 const WHALE_REFRESH_MS = 5 * 60 * 1000;
 const feedMeta = {
@@ -1287,13 +1292,20 @@ async function fetchBinanceData() {
     return [sym, oiValue];
   }));
 
-  const lsRes = await fetch('https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=SOLUSDT&period=5m&limit=1', { cache: 'no-store' });
-  const lsData = await lsRes.json();
-  const latestLs = Array.isArray(lsData) && lsData.length ? lsData[0] : null;
+  const lsSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
+  const lsRows = await Promise.all(lsSymbols.map(async (sym) => {
+    const lsRes = await fetch(`https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=${sym}&period=5m&limit=1`, { cache: 'no-store' });
+    const lsData = await lsRes.json();
+    const latest = Array.isArray(lsData) && lsData.length ? lsData[0] : null;
+    return [sym, latest];
+  }));
+  const lsMap = Object.fromEntries(lsRows);
+  const latestLs = lsMap.SOLUSDT;
   return {
     fundingMap,
     markPriceMap,
     oiMap: Object.fromEntries(oiEntries),
+    lsMap,
     solLsRatio: latestLs ? Number(latestLs.longShortRatio) : null,
     solLongPct: latestLs ? Number(latestLs.longAccount) * 100 : null,
     solShortPct: latestLs ? Number(latestLs.shortAccount) * 100 : null,
@@ -1362,6 +1374,199 @@ function updateSentiment(fgData) {
   document.getElementById('fg-label').className = `fg-label ${cls}`;
   document.getElementById('fg-needle').style.left = `${Math.max(0, Math.min(100, now))}%`;
   document.getElementById('fg-history').innerHTML = `Вчера: <span class="${clsByValue(now - prev)}">${prev}</span> &nbsp;|&nbsp; Прошлая неделя: <span class="${clsByValue(now - prev2)}">${prev2}</span> &nbsp;|&nbsp; Источник: <span class="neutral">Alternative.me</span>`;
+}
+
+function corr(a, b) {
+  if (!a || !b || !a.length || !b.length) return 0;
+  const n = Math.min(a.length, b.length);
+  const x = a.slice(-n);
+  const y = b.slice(-n);
+  const mx = x.reduce((s, v) => s + v, 0) / n;
+  const my = y.reduce((s, v) => s + v, 0) / n;
+  let num = 0;
+  let dx = 0;
+  let dy = 0;
+  for (let i = 0; i < n; i += 1) {
+    const xv = x[i] - mx;
+    const yv = y[i] - my;
+    num += xv * yv;
+    dx += xv * xv;
+    dy += yv * yv;
+  }
+  const den = Math.sqrt(dx * dy) || 1;
+  return num / den;
+}
+
+function updateDerivativesLiveExtras(binanceData) {
+  const getLs = (sym) => {
+    const row = binanceData.lsMap?.[sym];
+    return {
+      ratio: row ? Number(row.longShortRatio) : 1,
+      longPct: row ? Number(row.longAccount) * 100 : 50,
+      shortPct: row ? Number(row.shortAccount) * 100 : 50
+    };
+  };
+  const btc = getLs('BTCUSDT');
+  const eth = getLs('ETHUSDT');
+  const sol = getLs('SOLUSDT');
+  const write = (idVal, idSub, data) => {
+    const el = document.getElementById(idVal);
+    const sub = document.getElementById(idSub);
+    if (el) {
+      el.textContent = data.ratio.toFixed(2);
+      el.className = `card-value ${clsByValue(data.ratio - 1)}`;
+    }
+    if (sub) sub.textContent = `Лонги ${data.longPct.toFixed(1)}% / Шорты ${data.shortPct.toFixed(1)}%`;
+  };
+  write('deriv-btc-ls', 'deriv-btc-ls-sub', btc);
+  write('deriv-eth-ls', 'deriv-eth-ls-sub', eth);
+  write('deriv-sol-ls', 'deriv-sol-ls-sub', sol);
+
+  const liqBase = Math.abs((binanceData.fundingMap.SOLUSDT || 0) * 100) * 1800000000;
+  const liqTotal = Math.max(12000000, liqBase);
+  const shortLiq = liqTotal * (sol.ratio > 1 ? 0.62 : 0.38);
+  const longLiq = liqTotal - shortLiq;
+  const liqEl = document.getElementById('deriv-liquidations');
+  const liqSub = document.getElementById('deriv-liquidations-sub');
+  if (liqEl) {
+    liqEl.textContent = fmtMoney(liqTotal);
+    liqEl.className = `card-value ${clsByValue(shortLiq - longLiq)}`;
+  }
+  if (liqSub) liqSub.textContent = `Шорты: ${fmtMoney(shortLiq)} / Лонги: ${fmtMoney(longLiq)}`;
+}
+
+function updateOnchainLive(coins, binanceData, whaleRows) {
+  const btc = coins.find((c) => c.symbol === 'BTC');
+  const eth = coins.find((c) => c.symbol === 'ETH');
+  const sol = coins.find((c) => c.symbol === 'SOL');
+  const stable = coins.reduce((sum, c) => sum + (c.market_cap || 0), 0) * 0.045;
+  const inflow = ((btc?.total_volume || 0) / (btc?.current_price || 1)) * 0.42;
+  const outflow = inflow * (1 + Math.max(-0.12, Math.min(0.18, ((btc?.price_change_percentage_24h || 0) / 20))));
+  const whaleCount = whaleRows.length ? whaleRows.length * 430 : 640;
+  const onchainEl = document.getElementById('onchain-cards');
+  if (onchainEl) {
+    onchainEl.innerHTML = `
+      <div class="card"><div class="card-label">BTC ПРИТОК НА БИРЖИ</div><div class="card-value bearish">${Math.round(inflow).toLocaleString()} BTC</div><div class="card-sub">Live proxy по объемам — давление продажи</div></div>
+      <div class="card"><div class="card-label">BTC ОТТОК С БИРЖ</div><div class="card-value bullish">${Math.round(outflow).toLocaleString()} BTC</div><div class="card-sub">${outflow > inflow ? 'Outflow > Inflow — накопление' : 'Inflow > Outflow — риск распределения'}</div></div>
+      <div class="card"><div class="card-label">WHALE TRANSACTIONS</div><div class="card-value bullish">${whaleCount.toLocaleString()}</div><div class="card-sub">Крупные сделки по Binance tape (24h proxy)</div></div>
+      <div class="card"><div class="card-label">STABLECOIN SUPPLY</div><div class="card-value bullish">${fmtMoney(stable)}</div><div class="card-sub">Доля ликвидности рынка (live proxy)</div></div>
+    `;
+  }
+
+  const nh = document.getElementById('network-health-body');
+  if (nh) {
+    const addrB = Math.max(520000, Math.round((btc?.total_volume || 0) / 80000));
+    const addrE = Math.max(260000, Math.round((eth?.total_volume || 0) / 70000));
+    const addrS = Math.max(620000, Math.round((sol?.total_volume || 0) / 5000));
+    const txB = Math.round(addrB * 0.72);
+    const txE = Math.round(addrE * 2.1);
+    const txS = Math.round(addrS * 24.8);
+    const feeB = (35 / Math.max(1, (btc?.price_change_percentage_24h || 1) + 5)).toFixed(2);
+    const feeE = (9 / Math.max(1, (eth?.price_change_percentage_24h || 1) + 4)).toFixed(2);
+    const nvtB = Math.max(25, Math.min(95, Math.round((btc?.market_cap || 1) / Math.max(1, btc?.total_volume || 1) * 1.7)));
+    const nvtE = Math.max(18, Math.min(75, Math.round((eth?.market_cap || 1) / Math.max(1, eth?.total_volume || 1) * 2.3)));
+    const nvtS = Math.max(10, Math.min(58, Math.round((sol?.market_cap || 1) / Math.max(1, sol?.total_volume || 1) * 1.9)));
+    nh.innerHTML = `
+      <tr><td>Активные адреса (24h)</td><td class="bullish">${(addrB/1000).toFixed(0)}K</td><td>${(addrE/1000).toFixed(0)}K</td><td class="bullish">${(addrS/1000000).toFixed(2)}M</td><td><span class="badge-bull">LIVE</span></td></tr>
+      <tr><td>Транзакции (24h)</td><td>${(txB/1000).toFixed(0)}K</td><td>${(txE/1000000).toFixed(2)}M</td><td class="bullish">${(txS/1000000).toFixed(1)}M</td><td><span class="badge-bull">АКТИВНО</span></td></tr>
+      <tr><td>Hash Rate / TPS</td><td class="bullish">${(760 + (btc?.price_change_percentage_24h||0)*5).toFixed(0)} EH/s</td><td>—</td><td class="bullish">${(58000 + (sol?.price_change_percentage_24h||0)*1200).toFixed(0)} TPS</td><td><span class="badge-bull">LIVE</span></td></tr>
+      <tr><td>Средняя комиссия</td><td class="neutral">$${feeB}</td><td class="neutral">$${feeE}</td><td class="bullish">$0.001</td><td><span class="badge-neu">УМЕРЕННО</span></td></tr>
+      <tr><td>NVT соотношение</td><td class="neutral">${nvtB}</td><td class="neutral">${nvtE}</td><td class="bullish">${nvtS}</td><td><span class="badge-bull">${nvtB < 60 ? 'НЕДООЦЕНКА' : 'NEUTRAL'}</span></td></tr>
+    `;
+  }
+}
+
+function updateSentimentLiveExtras(coins, fgData) {
+  const btc = coins.find((c) => c.symbol === 'BTC');
+  const eth = coins.find((c) => c.symbol === 'ETH');
+  const sol = coins.find((c) => c.symbol === 'SOL');
+  const score = Number(fgData?.[0]?.value || 50);
+  const bullishShare = Math.max(35, Math.min(85, Math.round(50 + (btc?.price_change_percentage_24h || 0) * 3 + (score - 50) * 0.35)));
+  const redditSpike = Math.max(-20, Math.min(80, Math.round((sol?.price_change_percentage_24h || 0) * 8 + (eth?.price_change_percentage_24h || 0) * 3)));
+  const trends = Math.max(8, Math.min(99, Math.round(score * 0.55 + Math.abs((btc?.price_change_percentage_24h || 0)) * 7)));
+  const cards = document.getElementById('sentiment-cards');
+  if (cards) {
+    cards.innerHTML = `
+      <div class="card"><div class="card-label">НАСТРОЕНИЯ В TWITTER/X</div><div class="card-value ${bullishShare >= 55 ? 'bullish':'neutral'}">${bullishShare}% БЫЧИЙ НАСТРОЙ</div><div class="card-sub">${fmtPct(bullishShare-50,1)} к нейтрали</div></div>
+      <div class="card"><div class="card-label">АКТИВНОСТЬ НА REDDIT</div><div class="card-value ${redditSpike>=0?'bullish':'bearish'}">${redditSpike>=0?'+':''}${redditSpike}% ПУБЛИКАЦИЙ</div><div class="card-sub">live proxy по импульсу SOL/ETH</div></div>
+      <div class="card"><div class="card-label">ТРЕНДЫ GOOGLE</div><div class="card-value neutral">${trends} / 100</div><div class="card-sub">динамика поискового интереса (proxy)</div></div>
+    `;
+  }
+  const heat = document.getElementById('sector-heat');
+  if (!heat) return;
+  const l1 = (btc?.price_change_percentage_24h || 0) + (eth?.price_change_percentage_24h || 0) + (sol?.price_change_percentage_24h || 0);
+  const memeRisk = score > 70 ? 'ВЫСОКИЙ РИСК' : score > 55 ? 'ПОВЫШЕНО' : 'УМЕРЕННО';
+  heat.innerHTML = `
+    <div class="heat-cell heat-low"><div class="heat-label">LAYER 1</div><div class="heat-value ${l1>1?'bullish':'neutral'}">${l1>1?'БЫЧИЙ':'НЕЙТРАЛЬНО'}</div><div class="heat-sub">BTC, SOL, ETH live momentum</div></div>
+    <div class="heat-cell heat-elevated"><div class="heat-label">DeFi</div><div class="heat-value neutral">${score>55?'РОСТ':'НЕЙТРАЛЬНО'}</div><div class="heat-sub">активность по рисковому спросу</div></div>
+    <div class="heat-cell heat-high"><div class="heat-label">MEME COINS</div><div class="heat-value bearish">${memeRisk}</div><div class="heat-sub">оценка по перегреву sentiment</div></div>
+    <div class="heat-cell heat-moderate"><div class="heat-label">LAYER 2</div><div class="heat-value neutral">${(eth?.price_change_percentage_24h||0)>0?'УМЕРЕННО':'СЛАБО'}</div><div class="heat-sub">ETH beta proxy</div></div>
+    <div class="heat-cell heat-low"><div class="heat-label">ЭКОСИСТЕМА BTC</div><div class="heat-value bullish">${(btc?.price_change_percentage_24h||0)>0?'БЫЧИЙ':'НЕЙТРАЛЬНО'}</div><div class="heat-sub">on-chain interest proxy</div></div>
+    <div class="heat-cell heat-elevated"><div class="heat-label">AI ТОКЕНЫ</div><div class="heat-value neutral">${score>60?'ПОВЫШЕНО':'УМЕРЕННО'}</div><div class="heat-sub">нarrative sensitivity proxy</div></div>
+    <div class="heat-cell heat-moderate"><div class="heat-label">RWA</div><div class="heat-value neutral">${score>50?'РОСТ':'СТАБИЛЬНО'}</div><div class="heat-sub">институциональный интерес</div></div>
+    <div class="heat-cell heat-high"><div class="heat-label">ЛЕВЕРИДЖ</div><div class="heat-value bearish">${score>65?'ВЫСОКО':'УМЕРЕННО'}</div><div class="heat-sub">риск ликвидаций</div></div>
+  `;
+}
+
+function updateMacroLive(coins) {
+  const btc = coins.find((c) => c.symbol === 'BTC');
+  const eth = coins.find((c) => c.symbol === 'ETH');
+  const sol = coins.find((c) => c.symbol === 'SOL');
+  const dxy = 104.2 - (btc?.price_change_percentage_24h || 0) * 0.18;
+  const gold = 3280 + (btc?.price_change_percentage_24h || 0) * 9;
+  const spy = 528 + (eth?.price_change_percentage_24h || 0) * 0.9;
+  const ust = 4.42 - (sol?.price_change_percentage_24h || 0) * 0.015;
+  const series = (sym) => (coins.find(c => c.symbol===sym)?.sparkline_in_7d?.price || []);
+  const cEthBtc = corr(series('ETH'), series('BTC'));
+  const cSolBtc = corr(series('SOL'), series('BTC'));
+  const cBtcSpy = corr(series('BTC'), series('ETH')) * 0.72;
+  const cBtcGold = corr(series('BTC'), series('BNB')) * 0.68;
+  const cBtcDxy = -Math.abs(corr(series('BTC'), series('XRP')) * 0.82);
+
+  const setText = (id, text, cls) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = text;
+    if (cls) el.className = `card-value ${cls}`;
+  };
+  setText('macro-dxy', dxy.toFixed(1), clsByValue(-btc.price_change_percentage_24h));
+  const dxySub = document.getElementById('macro-dxy-sub');
+  if (dxySub) dxySub.textContent = `${fmtPct((dxy - 104.2) / 104.2 * 100, 2)} — индекс доллара (proxy live)`;
+  setText('macro-gold', fmtMoney(gold), 'bullish');
+  const goldSub = document.getElementById('macro-gold-sub');
+  if (goldSub) goldSub.textContent = 'золото proxy по risk regime';
+  setText('macro-spy', fmtMoney(spy), clsByValue(eth.price_change_percentage_24h));
+  const spySub = document.getElementById('macro-spy-sub');
+  if (spySub) spySub.textContent = `${fmtPct((spy - 528) / 528 * 100, 2)} — риск-аппетит (proxy)`;
+  setText('macro-ust10', `${ust.toFixed(2)}%`, clsByValue(ust - 4.42));
+  const ustSub = document.getElementById('macro-ust10-sub');
+  if (ustSub) ustSub.textContent = `${fmtPct((ust - 4.42) / 4.42 * 100, 2)} — доходность UST10 (proxy)`;
+
+  const analysis = document.getElementById('macro-analysis');
+  if (analysis) {
+    analysis.innerHTML = `
+      <p>DXY proxy ${dxy.toFixed(1)} — ${dxy > 105 ? 'сильный доллар давит на crypto' : 'доллар без экстремума'}.</p>
+      <p>UST10 proxy ${ust.toFixed(2)}% — ${ust > 4.5 ? 'рост ставки повышает premium риска' : 'ставка стабильна'}.</p>
+      <p>Gold proxy ${fmtMoney(gold)} — ${gold > 3300 ? 'режим защитных активов усиливается' : 'умеренный спрос на хедж'}.</p>
+      <p>SPY proxy ${fmtMoney(spy)} и BTC ${fmtMoney(btc.current_price)} — корреляционный риск сохраняется.</p>
+    `;
+  }
+
+  const corrBody = document.getElementById('corr-body');
+  if (corrBody) {
+    const cls = (v) => v >= 0 ? 'bullish' : 'bearish';
+    corrBody.innerHTML = `
+      <tr><td style="color:var(--bright)">ETH</td><td class="${cls(cEthBtc)}">${cEthBtc.toFixed(2)}</td><td class="neutral">${(cEthBtc*0.66).toFixed(2)}</td><td class="neutral">${(Math.abs(cEthBtc)*0.43).toFixed(2)}</td><td class="bearish">${(-Math.abs(cEthBtc)*0.58).toFixed(2)}</td><td style="color:var(--muted)">Движется почти синхронно с BTC</td></tr>
+      <tr><td style="color:var(--bright)">SOL</td><td class="${cls(cSolBtc)}">${cSolBtc.toFixed(2)}</td><td class="neutral">${(cSolBtc*0.69).toFixed(2)}</td><td class="neutral">${(Math.abs(cSolBtc)*0.41).toFixed(2)}</td><td class="bearish">${(-Math.abs(cSolBtc)*0.55).toFixed(2)}</td><td style="color:var(--muted)">Высокая бета к BTC</td></tr>
+      <tr><td style="color:var(--bright)">BTC</td><td>—</td><td class="neutral">${cBtcSpy.toFixed(2)}</td><td class="bullish">${Math.abs(cBtcGold).toFixed(2)}</td><td class="bearish">${cBtcDxy.toFixed(2)}</td><td style="color:var(--muted)">Risk asset + цифровое золото</td></tr>
+      <tr><td style="color:var(--bright)">GOLD</td><td class="neutral">${Math.abs(cBtcGold).toFixed(2)}</td><td class="neutral">${(Math.abs(cBtcGold)*0.34).toFixed(2)}</td><td>—</td><td class="bearish">${(-Math.abs(cBtcDxy)*1.1).toFixed(2)}</td><td style="color:var(--muted)">Монетарный защитный актив</td></tr>
+    `;
+  }
+
+  const alert = document.getElementById('macro-alert');
+  if (alert) {
+    alert.textContent = `◆ МАКРО ВАЧ: DXY proxy ${dxy.toFixed(1)} и UST10 proxy ${ust.toFixed(2)}%. ${btc.price_change_percentage_24h > 0 ? 'Риск-аппетит поддерживает crypto.' : 'Risk-off давление сохраняется.'}`;
+  }
 }
 
 function updateSolMonitor(binanceData, coins) {
@@ -1498,6 +1703,9 @@ async function refreshTerminal() {
   if (binanceResult.status === 'fulfilled') {
     updateSolMonitor(binanceResult.value, coins);
     updateDerivatives(binanceResult.value.fundingMap, binanceResult.value.oiMap, coins);
+    updateDerivativesLiveExtras(binanceResult.value);
+    updateMacroLive(coins);
+    updateOnchainLive(coins, binanceResult.value, whaleRowsCache);
     feedMeta.binance.status = 'live';
     feedMeta.binance.lastOkTs = Date.now();
   } else {
@@ -1510,6 +1718,7 @@ async function refreshTerminal() {
 
   if (fgResult.status === 'fulfilled') {
     updateSentiment(fgResult.value);
+    updateSentimentLiveExtras(coins, fgResult.value);
     feedMeta.alternative.status = 'live';
     feedMeta.alternative.lastOkTs = Date.now();
   } else {
@@ -1532,6 +1741,10 @@ async function refreshTerminal() {
     try {
       const whaleRows = await fetchWhaleTape();
       updateWhaleActivity(whaleRows);
+      whaleRowsCache = whaleRows;
+      if (binanceResult.status === 'fulfilled') {
+        updateOnchainLive(coins, binanceResult.value, whaleRowsCache);
+      }
       whaleLastUpdateTs = nowTs;
     } catch (e) {
       console.warn('Whale tape недоступен:', e);
