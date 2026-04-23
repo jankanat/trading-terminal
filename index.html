@@ -1123,12 +1123,16 @@ function updateRiskOpportunityFromMarket(coins, binanceData, fgData) {
   if (oEl) oEl.innerHTML = `${opps.slice(0, 4).join('<br/>')}<br/>${stamp}`;
 }
 
-function markNewsStale(reason = 'лента недоступна') {
-  const stale = `<span style="color:var(--orange);font-size:8px">stale: ${reason}${newsLastOkTs ? ` · last ok ${fmtUtcHm(newsLastOkTs)} UTC` : ''}</span>`;
+function markNewsStale(reason = 'лента недоступна', mode = 'warn') {
+  const staleText = mode === 'soft'
+    ? `rss недоступен, используется market-live${newsLastOkTs ? ` · last ok ${fmtUtcHm(newsLastOkTs)} UTC` : ''}`
+    : `stale: ${reason}${newsLastOkTs ? ` · last ok ${fmtUtcHm(newsLastOkTs)} UTC` : ''}`;
+  const staleColor = mode === 'soft' ? 'var(--muted)' : 'var(--orange)';
+  const stale = `<span style="color:${staleColor};font-size:8px">${staleText}</span>`;
   const rEl = document.getElementById('risk-list');
   const oEl = document.getElementById('opportunity-list');
-  if (rEl && !rEl.innerHTML.includes('stale:')) rEl.innerHTML = `${rEl.innerHTML}<br/>${stale}`;
-  if (oEl && !oEl.innerHTML.includes('stale:')) oEl.innerHTML = `${oEl.innerHTML}<br/>${stale}`;
+  if (rEl && !rEl.innerHTML.includes('stale:') && !rEl.innerHTML.includes('rss недоступен')) rEl.innerHTML = `${rEl.innerHTML}<br/>${stale}`;
+  if (oEl && !oEl.innerHTML.includes('stale:') && !oEl.innerHTML.includes('rss недоступен')) oEl.innerHTML = `${oEl.innerHTML}<br/>${stale}`;
 }
 
 async function fetchWhaleTape() {
@@ -1823,8 +1827,10 @@ async function refreshTerminal() {
       const reason = String(e?.message || 'rss/proxy').toLowerCase().replace(/_/g, '-');
       if (binanceResult.status === 'fulfilled') {
         updateRiskOpportunityFromMarket(coins, binanceResult.value, fgResult.status === 'fulfilled' ? fgResult.value : null);
+        markNewsStale(reason, 'soft');
+      } else {
+        markNewsStale(reason, 'warn');
       }
-      markNewsStale(reason);
     }
   }
   if (nowTs - whaleLastUpdateTs >= WHALE_REFRESH_MS) {
