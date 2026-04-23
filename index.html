@@ -906,6 +906,7 @@ let whaleLastUpdateTs = 0;
 let whaleRowsCache = [];
 let newsLastOkTs = 0;
 let newsStatus = 'init';
+const ENABLE_RSS_NEWS = false;
 const NEWS_REFRESH_MS = 5 * 60 * 1000;
 const WHALE_REFRESH_MS = 5 * 60 * 1000;
 const feedMeta = {
@@ -1814,7 +1815,11 @@ async function refreshTerminal() {
   }
 
   const nowTs = Date.now();
-  if (nowTs - newsLastUpdateTs >= NEWS_REFRESH_MS) {
+  if (binanceResult.status === 'fulfilled') {
+    updateRiskOpportunityFromMarket(coins, binanceResult.value, fgResult.status === 'fulfilled' ? fgResult.value : null);
+    newsStatus = 'market-live';
+    newsLastUpdateTs = nowTs;
+  } else if (ENABLE_RSS_NEWS && (nowTs - newsLastUpdateTs >= NEWS_REFRESH_MS)) {
     try {
       const headlines = await fetchRssHeadlines();
       updateRiskOpportunityFromNews(headlines);
@@ -1825,12 +1830,7 @@ async function refreshTerminal() {
       console.warn('Лента новостей недоступна:', e);
       newsStatus = 'stale';
       const reason = String(e?.message || 'rss/proxy').toLowerCase().replace(/_/g, '-');
-      if (binanceResult.status === 'fulfilled') {
-        updateRiskOpportunityFromMarket(coins, binanceResult.value, fgResult.status === 'fulfilled' ? fgResult.value : null);
-        markNewsStale(reason, 'soft');
-      } else {
-        markNewsStale(reason, 'warn');
-      }
+      markNewsStale(reason, 'warn');
     }
   }
   if (nowTs - whaleLastUpdateTs >= WHALE_REFRESH_MS) {
