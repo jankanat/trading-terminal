@@ -904,7 +904,9 @@ let cgLastErrorCode = '';
 let newsLastUpdateTs = 0;
 let whaleLastUpdateTs = 0;
 let whaleRowsCache = [];
-const NEWS_REFRESH_MS = 15 * 60 * 1000;
+let newsLastOkTs = 0;
+let newsStatus = 'init';
+const NEWS_REFRESH_MS = 5 * 60 * 1000;
 const WHALE_REFRESH_MS = 5 * 60 * 1000;
 const feedMeta = {
   coingecko: { status: 'cached', lastOkTs: 0, label: 'CG' },
@@ -1006,8 +1008,10 @@ async function fetchRssHeadlines() {
     'https://forklog.com/feed',
     'https://www.coindesk.com/arc/outboundfeeds/rss/'
   ];
+  const cacheBuster = Math.floor(Date.now() / 60000);
   const xmlList = await Promise.all(urls.map(async (url) => {
-    const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+    const bustedUrl = `${url}${url.includes('?') ? '&' : '?'}_cb=${cacheBuster}`;
+    const proxy = `https://api.allorigins.win/raw?url=${encodeURIComponent(bustedUrl)}`;
     const res = await fetch(proxy, { cache: 'no-store' });
     if (!res.ok) throw new Error(`RSS_${res.status}`);
     return res.text();
@@ -1024,8 +1028,10 @@ async function fetchRssHeadlines() {
     });
   });
 
-  headlines.sort((a, b) => b.pub - a.pub);
-  return headlines.slice(0, 20);
+  const unique = Array.from(new Map(headlines.map((h) => [h.title.toLowerCase(), h])).values());
+  unique.sort((a, b) => b.pub - a.pub);
+  const freshCutoff = Date.now() - (72 * 60 * 60 * 1000);
+  return unique.filter((h) => h.pub >= freshCutoff).slice(0, 20);
 }
 
 function updateRiskOpportunityFromNews(headlines) {
@@ -1045,8 +1051,17 @@ function updateRiskOpportunityFromNews(headlines) {
 
   const rEl = document.getElementById('risk-list');
   const oEl = document.getElementById('opportunity-list');
-  if (rEl) rEl.innerHTML = `${risks.join('<br/>')}<br/><span style="color:var(--muted);font-size:8px">обновлено ${fmtUtcHm(Date.now())} UTC</span>`;
-  if (oEl) oEl.innerHTML = `${opps.join('<br/>')}<br/><span style="color:var(--muted);font-size:8px">обновлено ${fmtUtcHm(Date.now())} UTC</span>`;
+  const latestPub = Math.max(...headlines.map((h) => h.pub || 0), 0);
+  if (rEl) rEl.innerHTML = `${risks.join('<br/>')}<br/><span style="color:var(--muted);font-size:8px">обновлено ${fmtUtcHm(Date.now())} UTC · последняя новость ${fmtUtcHm(latestPub)} UTC</span>`;
+  if (oEl) oEl.innerHTML = `${opps.join('<br/>')}<br/><span style="color:var(--muted);font-size:8px">обновлено ${fmtUtcHm(Date.now())} UTC · последняя новость ${fmtUtcHm(latestPub)} UTC</span>`;
+}
+
+function markNewsStale(reason = 'лента недоступна') {
+  const stale = `<span style="color:var(--orange);font-size:8px">stale: ${reason}${newsLastOkTs ? ` · last ok ${fmtUtcHm(newsLastOkTs)} UTC` : ''}</span>`;
+  const rEl = document.getElementById('risk-list');
+  const oEl = document.getElementById('opportunity-list');
+  if (rEl && !rEl.innerHTML.includes('stale:')) rEl.innerHTML = `${rEl.innerHTML}<br/>${stale}`;
+  if (oEl && !oEl.innerHTML.includes('stale:')) oEl.innerHTML = `${oEl.innerHTML}<br/>${stale}`;
 }
 
 async function fetchWhaleTape() {
@@ -1733,8 +1748,12 @@ async function refreshTerminal() {
       const headlines = await fetchRssHeadlines();
       updateRiskOpportunityFromNews(headlines);
       newsLastUpdateTs = nowTs;
+      newsLastOkTs = nowTs;
+      newsStatus = 'live';
     } catch (e) {
       console.warn('Лента новостей недоступна:', e);
+      newsStatus = 'stale';
+      markNewsStale('rss/proxy');
     }
   }
   if (nowTs - whaleLastUpdateTs >= WHALE_REFRESH_MS) {
